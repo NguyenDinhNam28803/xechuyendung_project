@@ -7,7 +7,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 ## Nội dung và chức năng
 
 - Trang chủ giới thiệu các nhóm xe, hướng dẫn và lối vào trang liên hệ.
-- Danh mục xe hỗ trợ lọc theo loại và tìm kiếm theo tên, hãng hoặc mô tả; truy cập trực tiếp theo danh mục qua tham số URL.
+- Danh mục xe hỗ trợ lọc theo loại, tìm kiếm theo tên/hãng/mô tả và chọn tối đa ba xe để đối chiếu thông tin hiện có; truy cập trực tiếp theo danh mục qua tham số URL.
 - Trang chi tiết cho mỗi xe, có thông tin đã biết, công năng, lưu ý và đường dẫn tư vấn gắn với xe đang xem.
 - Trang liên hệ riêng với form mẫu, kiểm tra trường bắt buộc và hiển thị trạng thái rõ ràng. Form không gửi dữ liệu đến máy chủ.
 - Các trang giới thiệu, dịch vụ, hướng dẫn mua xe, kiến thức/bài viết và trạng thái chính sách.
@@ -30,7 +30,9 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 
 ## Dữ liệu và thông tin cần xác nhận
 
-Danh mục hiện minh họa ba dòng: FAW J6L thùng bạt 2 tầng, xe chữa cháy Isuzu 4 khối và xe cứu hộ Foton 2 chức năng. Thông tin sản phẩm đang khai báo tại `app/data/vehicles.ts`; bài viết tại `app/data/articles.ts`.
+Danh mục hiện có 18 dòng xe minh họa thuộc các nhóm xe tải, xe chữa cháy, xe cứu hộ và xe bồn / xe môi trường. Trang chủ hiển thị một số xe tiêu biểu; trang `/xe` có toàn bộ danh mục và công cụ đối chiếu tối đa ba xe. Công cụ chỉ so sánh nội dung mẫu đang có, không phải bảng thông số kỹ thuật đã xác minh. Các mục mẫu không đại diện cho xe đang bán. Thông tin sản phẩm đang khai báo tại `app/data/vehicles.ts`; bài viết tại `app/data/articles.ts`.
+
+Giao diện sử dụng cỡ chữ và vùng thao tác lớn hơn, có bố cục riêng cho desktop, tablet và điện thoại; các thao tác chính có chỉ báo focus khi dùng bàn phím. Nên tiếp tục kiểm tra trên thiết bị thực trước khi phát hành.
 
 Trước khi đưa website vào hoạt động, cần:
 

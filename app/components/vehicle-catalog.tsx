@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import VehicleArtwork from "./vehicle-artwork";
-import { vehicleCategories, vehicles } from "../data/vehicles";
+import { getVehicleBySlug, vehicleCategories, vehicles } from "../data/vehicles";
+
+const maximumComparedVehicles = 3;
 
 const categoryBySlug: Record<string, string> = {
   "xe-tai": "Xe tải",
@@ -28,6 +30,11 @@ export default function VehicleCatalog() {
 function VehicleCatalogContent({ initialCategory }: { initialCategory: string }) {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
+  const [comparedSlugs, setComparedSlugs] = useState<string[]>([]);
+  const comparisonDialog = useRef<HTMLDialogElement>(null);
+  const comparedVehicles = comparedSlugs
+    .map((slug) => getVehicleBySlug(slug))
+    .filter((vehicle) => vehicle !== undefined);
 
   const filteredVehicles = useMemo(() => {
     const query = normalize(search.trim());
@@ -40,6 +47,14 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
       return matchesCategory && matchesSearch;
     });
   }, [activeCategory, search]);
+
+  function toggleComparedVehicle(slug: string) {
+    setComparedSlugs((current) => {
+      if (current.includes(slug)) return current.filter((item) => item !== slug);
+      if (current.length >= maximumComparedVehicles) return current;
+      return [...current, slug];
+    });
+  }
 
   return (
     <>
@@ -90,6 +105,18 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
                 <span className="vehicle-type">{vehicle.make} · {vehicle.category}</span>
                 <h2><Link href={`/xe/${vehicle.slug}`}>{vehicle.name}</Link></h2>
                 <p>{vehicle.description}</p>
+                <button
+                  aria-pressed={comparedSlugs.includes(vehicle.slug)}
+                  className="vehicle-compare-toggle"
+                  disabled={
+                    !comparedSlugs.includes(vehicle.slug) &&
+                    comparedSlugs.length >= maximumComparedVehicles
+                  }
+                  onClick={() => toggleComparedVehicle(vehicle.slug)}
+                  type="button"
+                >
+                  {comparedSlugs.includes(vehicle.slug) ? "Đã chọn so sánh" : "Chọn so sánh"}
+                </button>
                 <div className="card-footer">
                   <strong>Liên hệ báo giá</strong>
                   <Link href={`/xe/${vehicle.slug}`}>Xem chi tiết <span aria-hidden="true">→</span></Link>
@@ -106,6 +133,123 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
       <p className="catalog-disclaimer">
         Danh mục đang dùng dữ liệu mẫu. Thông số, tình trạng xe, giá bán và thời gian giao cần được xác nhận trực tiếp.
       </p>
+
+      {comparedVehicles.length > 0 && (
+        <aside className="vehicle-compare-bar" aria-label="Danh sách xe đang chọn so sánh">
+          <div className="vehicle-compare-summary">
+            <strong aria-live="polite">
+              Đã chọn {comparedVehicles.length}/{maximumComparedVehicles} xe
+            </strong>
+            <span>{comparedVehicles.map((vehicle) => vehicle.name).join(" · ")}</span>
+          </div>
+          <div className="vehicle-compare-actions">
+            <button
+              className="button button-primary"
+              disabled={comparedVehicles.length < 2}
+              onClick={() => comparisonDialog.current?.showModal()}
+              type="button"
+            >
+              So sánh xe
+            </button>
+            <button
+              className="vehicle-compare-clear"
+              onClick={() => setComparedSlugs([])}
+              type="button"
+            >
+              Xóa lựa chọn
+            </button>
+          </div>
+        </aside>
+      )}
+
+      <dialog
+        aria-labelledby="vehicle-comparison-title"
+        className="vehicle-comparison-dialog"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            comparisonDialog.current?.close();
+          }
+        }}
+        ref={comparisonDialog}
+      >
+        <div className="vehicle-comparison-heading">
+          <div>
+            <span className="section-kicker">ĐỐI CHIẾU DANH MỤC</span>
+            <h2 id="vehicle-comparison-title">So sánh xe đã chọn</h2>
+          </div>
+          <button
+            aria-label="Đóng bảng so sánh"
+            className="vehicle-comparison-close"
+            onClick={() => comparisonDialog.current?.close()}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <p className="vehicle-comparison-note">
+          Đây là đối chiếu nội dung mẫu hiện có, không phải bảng thông số kỹ thuật đã xác minh.
+          Vui lòng xác nhận cấu hình và hồ sơ của từng xe trước khi quyết định.
+        </p>
+        <div className="vehicle-comparison-table-wrap">
+          <table className="vehicle-comparison-table">
+            <thead>
+              <tr>
+                <th scope="col">Tiêu chí</th>
+                {comparedVehicles.map((vehicle) => (
+                  <th key={vehicle.slug} scope="col">{vehicle.name}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Nhóm xe</th>
+                {comparedVehicles.map((vehicle) => <td key={vehicle.slug}>{vehicle.category}</td>)}
+              </tr>
+              <tr>
+                <th scope="row">Nhãn hiệu</th>
+                {comparedVehicles.map((vehicle) => <td key={vehicle.slug}>{vehicle.make}</td>)}
+              </tr>
+              <tr>
+                <th scope="row">Thông tin đang có</th>
+                {comparedVehicles.map((vehicle) => (
+                  <td key={vehicle.slug}>
+                    <ul>
+                      {vehicle.knownDetails.map((detail) => (
+                        <li key={detail.label}><strong>{detail.label}:</strong> {detail.value}</li>
+                      ))}
+                    </ul>
+                  </td>
+                ))}
+              </tr>
+              <tr>
+                <th scope="row">Mục đích tham khảo</th>
+                {comparedVehicles.map((vehicle) => <td key={vehicle.slug}>{vehicle.useCase}</td>)}
+              </tr>
+              <tr>
+                <th scope="row">Trạng thái</th>
+                {comparedVehicles.map((vehicle) => (
+                  <td key={vehicle.slug}>
+                    {vehicle.badge === "Dữ liệu mẫu"
+                      ? "Cấu hình tham khảo, chưa xác nhận"
+                      : "Nội dung giới thiệu, cần đối chiếu thực tế"}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="vehicle-comparison-footer">
+          <span>Chọn tối đa {maximumComparedVehicles} xe để dễ đối chiếu.</span>
+          <button
+            className="button button-primary"
+            onClick={() => comparisonDialog.current?.close()}
+            type="button"
+          >
+            Đóng bảng so sánh
+          </button>
+        </div>
+      </dialog>
     </>
   );
 }

@@ -58,7 +58,7 @@ export default function Home() {
             <p>Tìm hiểu các dòng xe tiêu biểu, xem thông tin đã biết và gửi yêu cầu tư vấn cấu hình phù hợp.</p>
           </div>
           <div className="vehicle-grid">
-            {vehicles.map((vehicle) => (
+            {vehicles.slice(0, 3).map((vehicle) => (
               <article className="vehicle-card" key={vehicle.slug}>
                 <Link className={`card-image card-image-${vehicle.artwork}`} href={`/xe/${vehicle.slug}`} aria-label={`Xem ${vehicle.name}`}>
                   <span className="vehicle-badge"><i />{vehicle.badge}</span>

@@ -14,7 +14,7 @@
 @theme inline {
   --color-background: var(--paper);
   --color-foreground: var(--ink);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-barlow-condensed);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -30,8 +30,44 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+  font-family: var(--font-be-vietnam-pro), "Segoe UI", Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.button,
+.header-contact,
+.eyebrow,
+.section-kicker,
+.vehicle-type,
+.scene-label,
+.scene-number,
+.scene-model,
+.catalog-title strong,
+.card-details h3,
+.vehicle-badge,
+.category-link,
+.benefit-number,
+.benefit-item strong,
+.benefit-link,
+.guide-number {
+  font-family: var(--font-barlow-condensed), "Arial Narrow", "Segoe UI", sans-serif;
+  letter-spacing: 0.02em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
 }
 
 a {
@@ -206,6 +242,7 @@ input {
   color: #fff;
   font-size: 9px;
   font-weight: 700;
+  letter-spacing: 0;
   transition: background .2s ease;
 }
 
@@ -258,7 +295,7 @@ input {
   color: #aa7621;
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: .17em;
+  letter-spacing: .08em;
 }
 
 .eyebrow {
@@ -279,10 +316,11 @@ input {
 .hero h1 {
   margin: 21px 0 14px;
   color: var(--ink-deep);
-  font-size: clamp(39px, 4.4vw, 59px);
-  font-weight: 750;
-  letter-spacing: -.06em;
-  line-height: 1.08;
+  font-size: clamp(40px, 4.8vw, 63px);
+  font-weight: 700;
+  letter-spacing: -.075em;
+  line-height: 1.16;
+  text-transform: uppercase;
 }
 
 .hero h1 span {
@@ -313,6 +351,7 @@ input {
   padding: 0 15px;
   font-size: 9px;
   font-weight: 700;
+  letter-spacing: 0;
   transition: transform .2s ease, background .2s ease;
 }
 
@@ -433,9 +472,10 @@ input {
   top: 31px;
   right: 0;
   color: rgba(25, 53, 74, .14);
-  font-size: 25px;
+  font-size: 27px;
   font-weight: 800;
-  letter-spacing: -.04em;
+  letter-spacing: -.05em;
+  line-height: 1;
 }
 
 .scene-model span {
@@ -571,10 +611,11 @@ input {
 .section-heading h2 {
   margin: 12px 0 0;
   color: var(--ink-deep);
-  font-size: clamp(31px, 3.3vw, 42px);
+  font-size: clamp(32px, 3.4vw, 46px);
   font-weight: 700;
-  letter-spacing: -.055em;
+  letter-spacing: -.065em;
   line-height: 1.15;
+  text-transform: uppercase;
 }
 
 .section-heading h2 span {
@@ -860,16 +901,18 @@ input {
   color: #a1732a;
   font-size: 8px;
   font-weight: 700;
-  letter-spacing: .09em;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
 .card-details h3 {
   margin: 7px 0 6px;
   color: var(--ink-deep);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -.02em;
+  letter-spacing: -.04em;
+  line-height: 1.08;
+  text-transform: uppercase;
 }
 
 .card-details > p {

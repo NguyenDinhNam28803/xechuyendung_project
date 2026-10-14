@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { getVehicleBySlug } from "../data/vehicles";
 
@@ -14,14 +15,55 @@ const vehicleOptions = [
 
 export default function ContactForm() {
   const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const searchParams = useSearchParams();
   const vehicle = getVehicleBySlug(searchParams.get("xe") ?? "");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFeedback(
-      "Các trường bắt buộc đã hợp lệ. Đây là bản giao diện mẫu: yêu cầu chưa được gửi hoặc lưu. Vui lòng liên hệ trực tiếp qua kênh chính thức sau khi thông tin doanh nghiệp được cập nhật.",
-    );
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setFeedback("");
+    setIsSuccess(false);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.get("name"),
+          phone: formData.get("phone"),
+          category: formData.get("category"),
+          location: formData.get("location"),
+          message: formData.get("message"),
+          vehicleSlug: vehicle?.slug ?? "",
+          companyWebsite: formData.get("companyWebsite"),
+          consent: formData.get("consent") === "on",
+        }),
+      });
+      const result: { error?: string } = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error ?? "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.");
+      }
+
+      form.reset();
+      setIsSuccess(true);
+      setFeedback("Yêu cầu đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm.");
+    } catch (error) {
+      setFeedback(
+        error instanceof Error
+          ? error.message
+          : "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -36,7 +78,7 @@ export default function ContactForm() {
 
       <div className="form-demo-notice">
         <span aria-hidden="true">i</span>
-        <p><strong>Biểu mẫu đang ở chế độ xem trước.</strong> Dữ liệu chưa được gửi đi hoặc lưu trữ.</p>
+        <p><strong>Thông tin sẽ được lưu để tư vấn.</strong> Dữ liệu được chuyển tới Google Sheets do đơn vị quản lý và chỉ dùng để phản hồi yêu cầu của bạn.</p>
       </div>
 
       {vehicle && (
@@ -48,9 +90,21 @@ export default function ContactForm() {
 
       <form
         className="contact-form"
-        onChange={() => setFeedback("")}
+        onChange={() => {
+          setFeedback("");
+          setIsSuccess(false);
+        }}
         onSubmit={handleSubmit}
       >
+        <div className="contact-form-honeypot" aria-hidden="true">
+          <label htmlFor="contact-company-website">Website công ty</label>
+          <input
+            autoComplete="off"
+            id="contact-company-website"
+            name="companyWebsite"
+            tabIndex={-1}
+          />
+        </div>
         <div className="form-field">
           <label htmlFor="contact-name">Họ và tên <span>*</span></label>
           <input autoComplete="name" id="contact-name" maxLength={100} name="name" placeholder="Nhập họ và tên" required />
@@ -74,11 +128,30 @@ export default function ContactForm() {
           <label htmlFor="contact-message">Nhu cầu của bạn</label>
           <textarea id="contact-message" maxLength={1000} name="message" placeholder="Mô tả công việc, tải trọng hoặc cấu hình bạn đang tìm..." rows={4} />
         </div>
-        <div className="form-submit-row">
-          <p>Không nhập thông tin nhạy cảm. Form hiện không truyền dữ liệu đến máy chủ.</p>
-          <button className="button button-primary" type="submit">Kiểm tra thông tin <span aria-hidden="true">→</span></button>
+        <div className="form-consent">
+          <input id="contact-consent" name="consent" required type="checkbox" />
+          <label htmlFor="contact-consent">
+            Tôi đồng ý để đơn vị lưu thông tin trên Google Sheets và dùng thông tin này để phản hồi yêu cầu tư vấn.{" "}
+            Xem <Link href="/chinh-sach">thông tin quyền riêng tư</Link>.
+          </label>
         </div>
-        {feedback && <p className="form-feedback" role="status" aria-live="polite">{feedback}</p>}
+        <div className="form-submit-row">
+          <p>
+            Không nhập thông tin nhạy cảm.
+          </p>
+          <button className="button button-primary" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"} <span aria-hidden="true">→</span>
+          </button>
+        </div>
+        {feedback && (
+          <p
+            className={`form-feedback${isSuccess ? " form-feedback-success" : " form-feedback-error"}`}
+            role="status"
+            aria-live="polite"
+          >
+            {feedback}
+          </p>
+        )}
       </form>
     </div>
   );

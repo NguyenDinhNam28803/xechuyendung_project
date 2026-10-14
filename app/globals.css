@@ -1257,6 +1257,14 @@ input {
   margin-top: 17px;
 }
 
+.contact-form-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .contact-form-loading {
   min-height: 260px;
   display: grid;
@@ -1296,6 +1304,30 @@ input {
 
 .form-field-full {
   grid-column: 1 / -1;
+}
+
+.form-consent {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: #526773;
+  font-size: 8px;
+  line-height: 1.6;
+}
+
+.form-consent input {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  margin: 1px 0 0;
+  accent-color: var(--ink);
+}
+
+.form-consent label a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .form-field label {
@@ -1362,11 +1394,22 @@ input {
   line-height: 1.6;
 }
 
+.form-submit-row > p a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .form-submit-row .button {
   min-height: 38px;
   flex-shrink: 0;
   border: 0;
   cursor: pointer;
+}
+
+.form-submit-row .button:disabled {
+  cursor: wait;
+  opacity: .65;
 }
 
 .form-feedback {
@@ -1378,6 +1421,18 @@ input {
   color: #5c4b2d;
   font-size: 8px;
   line-height: 1.7;
+}
+
+.form-feedback-success {
+  border-left-color: #3d8b62;
+  background: #eef8f1;
+  color: #285b3d;
+}
+
+.form-feedback-error {
+  border-left-color: #c34b3d;
+  background: #fff1ef;
+  color: #81372f;
 }
 
 .site-footer {
@@ -3420,6 +3475,10 @@ input {
 .form-demo-notice {
   gap: 12px;
   padding: 13px 14px;
+}
+
+.form-consent {
+  font-size: 15px;
 }
 
 .form-demo-notice p {

@@ -7,6 +7,7 @@ export type Vehicle = {
   category: string;
   description: string;
   artwork: VehicleArtworkKind;
+  images: string[];
   badge: string;
   useCase: string;
   highlights: string[];
@@ -45,6 +46,7 @@ function createSampleVehicle({
     category,
     description: `${configuration}. Cấu hình minh họa, cần xác nhận theo nhu cầu thực tế.`,
     artwork,
+    images: [],
     badge: "Dữ liệu mẫu",
     useCase,
     highlights: [
@@ -68,6 +70,7 @@ export const vehicles: Vehicle[] = [
     category: "Xe tải",
     description: "Giải pháp chở hàng cồng kềnh với cấu hình thùng bạt và bửng nâng.",
     artwork: "cargo",
+    images: [],
     badge: "Xe tải",
     useCase: "Vận chuyển hàng hóa cần không gian xếp dỡ linh hoạt.",
     highlights: [
@@ -88,6 +91,7 @@ export const vehicles: Vehicle[] = [
     category: "Xe chữa cháy",
     description: "Xe chữa cháy bồn nước 4 m³, cấu hình cần được xác nhận theo yêu cầu.",
     artwork: "fire",
+    images: [],
     badge: "Xe chuyên dụng",
     useCase: "Phục vụ phương án chữa cháy theo điều kiện công trình và đơn vị sử dụng.",
     highlights: [
@@ -108,6 +112,7 @@ export const vehicles: Vehicle[] = [
     category: "Xe cứu hộ",
     description: "Giải pháp cứu hộ kết hợp sàn trượt và cẩu kéo, cần tư vấn theo phương tiện phục vụ.",
     artwork: "rescue",
+    images: [],
     badge: "Xe chuyên dụng",
     useCase: "Hỗ trợ cứu hộ phương tiện với cấu hình được lựa chọn theo nhu cầu khai thác.",
     highlights: [

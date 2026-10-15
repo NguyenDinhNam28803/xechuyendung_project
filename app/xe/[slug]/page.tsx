@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import SiteFooter from "../../components/site-footer";
 import SiteHeader from "../../components/site-header";
-import VehicleArtwork from "../../components/vehicle-artwork";
+import VehicleGallery from "../../components/vehicle-gallery";
 import { getVehicleBySlug, vehicles } from "../../data/vehicles";
 
 type VehiclePageProps = { params: Promise<{ slug: string }> };
@@ -33,10 +33,12 @@ export default async function VehicleDetailPage({ params }: VehiclePageProps) {
           <Link href="/">Trang chủ</Link><span>/</span><Link href="/xe">Danh mục xe</Link><span>/</span><span>{vehicle.name}</span>
         </div>
         <article className="vehicle-detail">
-          <div className={`detail-artwork card-image-${vehicle.artwork}`}>
-            <span className="vehicle-badge"><i />{vehicle.badge}</span>
-            <VehicleArtwork kind={vehicle.artwork} />
-          </div>
+          <VehicleGallery
+            artwork={vehicle.artwork}
+            badge={vehicle.badge}
+            images={vehicle.images}
+            name={vehicle.name}
+          />
           <div className="detail-copy">
             <span className="section-kicker">{vehicle.make} · {vehicle.category}</span>
             <h1>{vehicle.name}</h1>

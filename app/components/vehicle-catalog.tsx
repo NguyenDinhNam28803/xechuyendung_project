@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import VehicleArtwork from "./vehicle-artwork";
@@ -98,7 +99,17 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
             <article className="vehicle-card" key={vehicle.slug}>
               <Link className={`card-image card-image-${vehicle.artwork}`} href={`/xe/${vehicle.slug}`} aria-label={`Xem ${vehicle.name}`}>
                 <span className="vehicle-badge"><i />{vehicle.badge}</span>
-                <VehicleArtwork kind={vehicle.artwork} />
+                {vehicle.images[0] ? (
+                  <Image
+                    alt={vehicle.name}
+                    className="card-photo"
+                    fill
+                    sizes="(max-width: 760px) 100vw, 33vw"
+                    src={vehicle.images[0]}
+                  />
+                ) : (
+                  <VehicleArtwork kind={vehicle.artwork} />
+                )}
                 <span className="card-open" aria-hidden="true">↗</span>
               </Link>
               <div className="card-details">

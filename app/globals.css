@@ -1811,6 +1811,20 @@ input {
   line-height: 1.7;
 }
 
+.detail-source {
+  margin: 8px 0 0;
+  color: #526773;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.detail-source a {
+  color: var(--red);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .detail-information {
   max-width: 1240px;
   display: grid;
@@ -3659,6 +3673,7 @@ input {
 .page-cta > div > span,
 .detail-quote-note span,
 .detail-disclaimer,
+.detail-source,
 .detail-back a,
 .text-link,
 .verification-note > a,

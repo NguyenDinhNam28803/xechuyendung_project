@@ -142,7 +142,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
         </div>
       )}
       <p className="catalog-disclaimer">
-        Danh mục đang dùng dữ liệu mẫu. Thông số, tình trạng xe, giá bán và thời gian giao cần được xác nhận trực tiếp.
+        Danh mục gồm thông tin mẫu và thông tin tham khảo từ nguồn bên ngoài. Hãy xác nhận cấu hình, tình trạng xe, giá bán và thời gian giao trước khi quyết định.
       </p>
 
       {comparedVehicles.length > 0 && (
@@ -199,7 +199,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
           </button>
         </div>
         <p className="vehicle-comparison-note">
-          Đây là đối chiếu nội dung mẫu hiện có, không phải bảng thông số kỹ thuật đã xác minh.
+          Đây là đối chiếu thông tin tham khảo hiện có, không phải bảng thông số kỹ thuật đã xác minh.
           Vui lòng xác nhận cấu hình và hồ sơ của từng xe trước khi quyết định.
         </p>
         <div className="vehicle-comparison-table-wrap">

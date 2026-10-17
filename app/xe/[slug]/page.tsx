@@ -50,7 +50,19 @@ export default async function VehicleDetailPage({ params }: VehiclePageProps) {
             <Link className="button button-primary" href={`/lien-he?xe=${vehicle.slug}#contact-form`}>
               Yêu cầu tư vấn xe này <span aria-hidden="true">→</span>
             </Link>
-            <p className="detail-disclaimer">Hình minh họa. Cấu hình, thông số và hồ sơ cần được xác nhận theo xe thực tế trước khi giao dịch.</p>
+            <p className="detail-disclaimer">
+              {vehicle.sourceUrl
+                ? "Thông tin được tổng hợp từ nguồn tham khảo và có thể khác phiên bản xe thực tế. Vui lòng đối chiếu hồ sơ kỹ thuật trước khi quyết định."
+                : "Cấu hình và thông tin xe đang mang tính minh họa; vui lòng xác nhận theo xe thực tế trước khi giao dịch."}
+            </p>
+            {vehicle.sourceUrl && (
+              <p className="detail-source">
+                Nguồn thông tin:{" "}
+                <a href={vehicle.sourceUrl} rel="noreferrer" target="_blank">
+                  Tân Quốc Tuấn Auto <span aria-hidden="true">↗</span>
+                </a>
+              </p>
+            )}
           </div>
         </article>
 

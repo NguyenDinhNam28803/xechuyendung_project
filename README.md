@@ -8,6 +8,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 
 - Trang chủ giới thiệu các nhóm xe, nội dung hướng dẫn và lối vào trang liên hệ.
 - Danh mục xe hỗ trợ lọc theo loại, tìm kiếm theo tên, thương hiệu hoặc mô tả, và chọn tối đa ba xe để đối chiếu thông tin hiện có.
+- Một số trang xe có ảnh trong `app/assets/` và thông tin tham khảo với liên kết nguồn; các thông tin này vẫn cần được xác nhận theo phiên bản và hồ sơ thực tế.
 - Trang chi tiết cho từng xe trình bày thông tin đã biết, công năng, lưu ý và liên kết tư vấn theo xe đang xem.
 - Trang liên hệ gửi yêu cầu tư vấn tới Google Sheets qua API phía máy chủ; báo trạng thái gửi thành công hoặc lỗi.
 - Các trang nội dung gồm giới thiệu, dịch vụ, tư vấn mua xe, bài viết kiến thức và trạng thái chính sách.
@@ -31,9 +32,9 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 
 ## Dữ liệu và thông tin cần xác nhận
 
-Danh mục hiện có 18 dòng xe minh họa thuộc các nhóm xe tải, xe chữa cháy, xe cứu hộ và xe bồn / xe môi trường. Trang chủ hiển thị một số xe tiêu biểu; trang `/xe` có toàn bộ danh mục. Công cụ so sánh chỉ đối chiếu nội dung mẫu đang có, không phải bảng thông số kỹ thuật đã xác minh. Các mục mẫu không đại diện cho xe đang bán.
+Danh mục hiện có 18 dòng xe thuộc các nhóm xe tải, xe chữa cháy, xe cứu hộ và xe bồn / xe môi trường. Một số xe có thông tin tham khảo được tóm tắt từ trang sản phẩm bên ngoài và đường dẫn nguồn ở trang chi tiết; những xe còn lại là dữ liệu minh họa. Bốn bộ ảnh xe trong `app/assets/` được nối với danh mục qua `app/data/vehicle-images.ts`. Trang chủ chọn các xe có ảnh để giới thiệu; trang `/xe` có toàn bộ danh mục. Công cụ so sánh chỉ đối chiếu dữ liệu đang hiển thị, không thay thế thông số đã xác minh. Thông tin nguồn tham khảo không xác nhận tình trạng xe đang bán.
 
-Thông tin xe được khai báo tại `app/data/vehicles.ts`; bài viết tại `app/data/articles.ts`. Trước khi đưa website vào hoạt động, cần:
+Thông tin xe được khai báo tại `app/data/vehicles.ts`; ảnh xe tại `app/assets/` và ánh xạ ảnh tại `app/data/vehicle-images.ts`; bài viết tại `app/data/articles.ts`. Trước khi đưa website vào hoạt động, cần:
 
 1. Xác nhận tên pháp nhân, địa chỉ, hotline, email, giờ làm việc, showroom và các kênh mạng xã hội.
 2. Thay dữ liệu minh họa bằng danh sách xe, ảnh, phiên bản và thông số đã được doanh nghiệp kiểm duyệt.
@@ -41,7 +42,7 @@ Thông tin xe được khai báo tại `app/data/vehicles.ts`; bài viết tại
 4. Cấu hình API nhận yêu cầu và hoàn thiện chính sách quyền riêng tư, bao gồm đơn vị chịu trách nhiệm, thời hạn lưu trữ và đầu mối xử lý yêu cầu dữ liệu.
 5. Chỉ nhúng bản đồ, số điện thoại hoặc liên kết mạng xã hội sau khi có thông tin chính thức.
 
-Không sử dụng nội dung tham khảo trên website khác làm thông tin doanh nghiệp của dự án. Các bài kiến thức chỉ mang tính định hướng; thông số và quy định cần được xác minh theo xe và thời điểm thực tế.
+Thông tin xe tham khảo không phải thông tin doanh nghiệp của website này; không sao chép địa chỉ, hotline, chính sách hoặc tuyên bố thương mại của nguồn tham khảo thành thông tin của dự án. Cần xác minh thông số và quyền sử dụng ảnh/nội dung trước khi phát hành. Các bài kiến thức chỉ mang tính định hướng; thông số và quy định cần được đối chiếu theo xe và thời điểm thực tế.
 
 ## Công nghệ
 
@@ -86,7 +87,8 @@ npm run start  # Chạy bản build production
 ```text
 app/
   components/          # Header, footer, form và thành phần danh mục dùng chung
-  data/                # Dữ liệu xe và bài viết mẫu
+  assets/              # Ảnh xe dùng trong danh mục và trang chi tiết
+  data/                # Dữ liệu xe, ánh xạ ảnh và bài viết
   xe/                  # Danh mục xe và trang chi tiết [slug]
   lien-he/             # Trang liên hệ
   gioi-thieu/          # Trang giới thiệu

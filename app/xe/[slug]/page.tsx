@@ -87,6 +87,15 @@ export default async function VehicleDetailPage({ params }: VehiclePageProps) {
             <p className="detail-disclaimer">Các mô tả trên chỉ định hướng nội dung tư vấn, không thay thế hồ sơ kỹ thuật hoặc báo giá.</p>
           </section>
         </div>
+        <div className="page-cta detail-contact-cta">
+          <div>
+            <strong>Cần tư vấn hoặc báo giá xe này?</strong>
+            <span>Gửi yêu cầu kèm theo dòng xe đang xem; thông tin liên hệ mẫu trên website chưa sử dụng được.</span>
+          </div>
+          <Link className="button button-primary" href={`/lien-he?xe=${vehicle.slug}#contact-form`}>
+            Gửi yêu cầu tư vấn <span aria-hidden="true">→</span>
+          </Link>
+        </div>
         <div className="detail-back"><Link href="/xe">← Quay lại danh mục xe</Link></div>
       </main>
       <SiteFooter />

@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteFooter from "./components/site-footer";
 import SiteHeader from "./components/site-header";
 import VehicleArtwork from "./components/vehicle-artwork";
+import { vehicleImages } from "./data/vehicle-images";
 import { vehicles } from "./data/vehicles";
 
 const benefits = [
@@ -34,11 +35,19 @@ export default function Home() {
           </div>
           <div className="hero-scene">
             <div className="scene-circle" />
-            <div className="scene-label"><span /> XE CHUYÊN DỤNG TIÊU BIỂU</div>
-            <div className="scene-model">ISUZU <span>4 KHỐI</span></div>
-            <VehicleArtwork kind="fire" />
-            <div className="scene-caption"><span>GIẢI PHÁP THEO NHIỆM VỤ</span><strong>Xe chữa cháy</strong></div>
-            <div className="scene-number">01 <span>/ 03</span></div>
+            <Image
+              alt="Xe tải đông lạnh Hyundai Mighty N550LA trong ảnh tham khảo"
+              className="hero-real-photo"
+              fill
+              priority
+              sizes="(max-width: 760px) 100vw, 50vw"
+              src={vehicleImages.refrigeratedTruck[0]}
+            />
+            <div className="scene-label"><span /> ẢNH XE THỰC TẾ · THAM KHẢO</div>
+            <div className="scene-caption">
+              <span>XE TẢI ĐÔNG LẠNH</span>
+              <strong>Hyundai Mighty N550LA</strong>
+            </div>
           </div>
         </section>
 
@@ -125,8 +134,8 @@ export default function Home() {
             <span className="section-kicker">BẠN ĐANG TÌM DÒNG XE NÀO?</span>
             <h2>Chia sẻ nhu cầu.<br /><span>Cùng làm rõ cấu hình.</span></h2>
           </div>
-          <p>Form hiện là bản xem trước và chưa gửi dữ liệu. Thông tin hotline, địa chỉ và email sẽ được bổ sung sau khi xác nhận.</p>
-          <Link className="button button-primary" href="/lien-he">Đến trang liên hệ <span aria-hidden="true">→</span></Link>
+          <p>Gửi yêu cầu bằng biểu mẫu liên hệ. Hotline, email và địa chỉ đang hiển thị dữ liệu mẫu, chưa dùng để liên hệ thực tế.</p>
+          <Link className="button button-primary" href="/lien-he#contact-form">Gửi yêu cầu tư vấn <span aria-hidden="true">→</span></Link>
         </section>
       </main>
       <SiteFooter />

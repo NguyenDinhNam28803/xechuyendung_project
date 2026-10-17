@@ -13,7 +13,7 @@ export default function NewsPage() {
   return (
     <>
       <SiteHeader />
-      <main className="content-page">
+      <main className="content-page info-page news-page">
         <div className="breadcrumbs"><Link href="/">Trang chủ</Link><span>/</span><span>Kiến thức</span></div>
         <section className="page-intro">
           <span className="section-kicker">GÓC KIẾN THỨC</span>
@@ -29,7 +29,9 @@ export default function NewsPage() {
                 <h2><Link href={`/tin-tuc/${article.slug}`}>{article.title}</Link></h2>
                 <p>{article.summary}</p>
               </div>
-              <Link className="article-open" href={`/tin-tuc/${article.slug}`} aria-label={`Đọc bài: ${article.title}`}>↗</Link>
+              <Link className="article-open" href={`/tin-tuc/${article.slug}`}>
+                <span>Đọc bài</span><span aria-hidden="true">↗</span>
+              </Link>
             </article>
           ))}
         </section>

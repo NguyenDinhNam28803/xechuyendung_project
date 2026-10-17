@@ -3,15 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { getVehicleBySlug } from "../data/vehicles";
-
-const vehicleOptions = [
-  "Xe tải",
-  "Xe chữa cháy",
-  "Xe cứu hộ",
-  "Xe bồn / xe môi trường",
-  "Khác / cần tư vấn",
-];
+import { contactVehicleCategories, getVehicleBySlug } from "../data/vehicles";
 
 export default function ContactForm() {
   const [feedback, setFeedback] = useState("");
@@ -78,7 +70,7 @@ export default function ContactForm() {
 
       <div className="form-demo-notice">
         <span aria-hidden="true">i</span>
-        <p><strong>Thông tin sẽ được lưu để tư vấn.</strong> Dữ liệu được chuyển tới Google Sheets do đơn vị quản lý và chỉ dùng để phản hồi yêu cầu của bạn.</p>
+        <p><strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Thông tin hotline và email mẫu không dùng để liên hệ thực tế.</p>
       </div>
 
       {vehicle && (
@@ -117,7 +109,7 @@ export default function ContactForm() {
           <label htmlFor="contact-category">Dòng xe quan tâm <span>*</span></label>
           <select defaultValue={vehicle?.category ?? ""} id="contact-category" name="category" required>
             <option disabled value="">Chọn dòng xe</option>
-            {vehicleOptions.map((option) => <option key={option}>{option}</option>)}
+            {contactVehicleCategories.map((option) => <option key={option}>{option}</option>)}
           </select>
         </div>
         <div className="form-field">

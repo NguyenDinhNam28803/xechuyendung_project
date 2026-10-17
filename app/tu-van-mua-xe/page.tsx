@@ -20,7 +20,7 @@ export default function BuyingGuidePage() {
   return (
     <>
       <SiteHeader />
-      <main className="content-page">
+      <main className="content-page info-page buying-page">
         <div className="breadcrumbs"><Link href="/">Trang chủ</Link><span>/</span><span>Tư vấn mua xe</span></div>
         <section className="page-intro">
           <span className="section-kicker">CẨM NANG CHỌN XE</span>

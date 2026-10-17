@@ -35,7 +35,7 @@ export default function ServicesPage() {
   return (
     <>
       <SiteHeader />
-      <main className="content-page">
+      <main className="content-page info-page services-page">
         <div className="breadcrumbs"><Link href="/">Trang chủ</Link><span>/</span><span>Dịch vụ</span></div>
         <section className="page-intro">
           <span className="section-kicker">QUY TRÌNH THAM KHẢO</span>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SampleContactInfo from "./sample-contact-info";
 
 const vehicleLinks = [
   { href: "/xe?loai=xe-tai", label: "Xe tải" },
@@ -33,8 +34,8 @@ export default function SiteFooter() {
         <div className="footer-contact">
           <h2>Cần tư vấn?</h2>
           <p>Gửi nhu cầu để được định hướng dòng xe và cấu hình cần tìm.</p>
-          <Link href="/lien-he">Gửi yêu cầu tư vấn <span aria-hidden="true">→</span></Link>
-          <small>Hotline, email và địa chỉ showroom sẽ được cập nhật sau khi xác nhận.</small>
+          <SampleContactInfo compact />
+          <Link href="/lien-he#contact-form">Mở biểu mẫu liên hệ <span aria-hidden="true">→</span></Link>
         </div>
       </div>
       <div className="footer-bottom">

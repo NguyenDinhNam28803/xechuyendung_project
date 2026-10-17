@@ -5,16 +5,16 @@ import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import VehicleArtwork from "./vehicle-artwork";
-import { getVehicleBySlug, vehicleCategories, vehicles } from "../data/vehicles";
+import {
+  getVehicleBySlug,
+  vehicleCategories,
+  vehicleCategoryBySlug,
+  type VehicleCategory,
+  vehicles,
+} from "../data/vehicles";
 
 const maximumComparedVehicles = 3;
-
-const categoryBySlug: Record<string, string> = {
-  "xe-tai": "Xe tải",
-  "xe-chua-chay": "Xe chữa cháy",
-  "xe-cuu-ho": "Xe cứu hộ",
-  "xe-bon-moi-truong": "Xe bồn / xe môi trường",
-};
+type CatalogCategory = "Tất cả" | VehicleCategory;
 
 function normalize(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi");
@@ -22,13 +22,16 @@ function normalize(value: string) {
 
 export default function VehicleCatalog() {
   const searchParams = useSearchParams();
-  const category = categoryBySlug[searchParams.get("loai") ?? ""] ?? "Tất cả";
-  const initialCategory = vehicleCategories.includes(category) ? category : "Tất cả";
+  const categorySlug = searchParams.get("loai");
+  const category =
+    Object.entries(vehicleCategoryBySlug).find(([slug]) => slug === categorySlug)?.[1] ?? "Tất cả";
+  const initialCategory: CatalogCategory =
+    category === "Tất cả" || vehicleCategories.includes(category) ? category : "Tất cả";
 
   return <VehicleCatalogContent key={searchParams.toString()} initialCategory={initialCategory} />;
 }
 
-function VehicleCatalogContent({ initialCategory }: { initialCategory: string }) {
+function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCategory }) {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
   const [comparedSlugs, setComparedSlugs] = useState<string[]>([]);
@@ -129,7 +132,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: string })
                   {comparedSlugs.includes(vehicle.slug) ? "Đã chọn so sánh" : "Chọn so sánh"}
                 </button>
                 <div className="card-footer">
-                  <strong>Liên hệ báo giá</strong>
+                  <Link href={`/lien-he?xe=${vehicle.slug}#contact-form`}>Yêu cầu tư vấn</Link>
                   <Link href={`/xe/${vehicle.slug}`}>Xem chi tiết <span aria-hidden="true">→</span></Link>
                 </div>
               </div>

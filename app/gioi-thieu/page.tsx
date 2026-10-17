@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <>
       <SiteHeader />
-      <main className="content-page">
+      <main className="content-page info-page about-page">
         <div className="breadcrumbs"><Link href="/">Trang chủ</Link><span>/</span><span>Giới thiệu</span></div>
         <section className="page-intro">
           <span className="section-kicker">GIỚI THIỆU</span>

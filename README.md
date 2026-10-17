@@ -7,6 +7,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 ## Nội dung và chức năng
 
 - Trang chủ giới thiệu các nhóm xe, nội dung hướng dẫn và lối vào trang liên hệ.
+- Banner trang chủ dùng ảnh xe đông lạnh thật có trong asset, ghi rõ là ảnh tham khảo; các trang Dịch vụ, Tư vấn mua xe, Giới thiệu và Tin tức có bố cục responsive, chữ dễ đọc và thao tác rõ ràng.
 - Danh mục xe hỗ trợ lọc theo loại, tìm kiếm theo tên, thương hiệu hoặc mô tả, và chọn tối đa ba xe để đối chiếu thông tin hiện có.
 - Một số trang xe có ảnh trong `app/assets/` và thông tin tham khảo với liên kết nguồn; các thông tin này vẫn cần được xác nhận theo phiên bản và hồ sơ thực tế.
 - Trang chi tiết cho từng xe trình bày thông tin đã biết, công năng, lưu ý và liên kết tư vấn theo xe đang xem.
@@ -22,7 +23,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 | `/` | Trang chủ |
 | `/xe` | Danh mục xe |
 | `/xe/[slug]` | Chi tiết xe |
-| `/lien-he` | Form yêu cầu tư vấn (bản mẫu, chưa gửi) |
+| `/lien-he` | Thông tin liên hệ mẫu và form yêu cầu tư vấn; gửi dữ liệu khi API được cấu hình |
 | `/gioi-thieu` | Giới thiệu dự án |
 | `/dich-vu` | Các bước tư vấn tham khảo |
 | `/tu-van-mua-xe` | Checklist chuẩn bị khi tìm mua xe |
@@ -32,7 +33,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 
 ## Dữ liệu và thông tin cần xác nhận
 
-Danh mục hiện có 18 dòng xe thuộc các nhóm xe tải, xe chữa cháy, xe cứu hộ và xe bồn / xe môi trường. Một số xe có thông tin tham khảo được tóm tắt từ trang sản phẩm bên ngoài và đường dẫn nguồn ở trang chi tiết; những xe còn lại là dữ liệu minh họa. Bốn bộ ảnh xe trong `app/assets/` được nối với danh mục qua `app/data/vehicle-images.ts`. Trang chủ chọn các xe có ảnh để giới thiệu; trang `/xe` có toàn bộ danh mục. Công cụ so sánh chỉ đối chiếu dữ liệu đang hiển thị, không thay thế thông số đã xác minh. Thông tin nguồn tham khảo không xác nhận tình trạng xe đang bán.
+Danh mục hiện có 18 dòng xe thuộc bốn nhóm được định nghĩa tập trung trong `app/data/vehicles.ts`: xe tải, xe chữa cháy, xe cứu hộ và xe bồn / xe môi trường. Một số cấu hình có thông tin tham khảo được tổng hợp từ trang sản phẩm cụ thể, gồm FAW JH6 gắn cẩu, xe chữa cháy Dongfeng, Foton cứu hộ/nâng đầu, xe hút chất thải Foton và xe quét đường Isuzu; trang chi tiết liên kết tới nguồn tương ứng. Số liệu được nguồn gọi là dự kiến, có điều kiện hoặc mâu thuẫn được ghi chú để người đọc không nhầm là thông số đã xác minh. Bốn bộ ảnh trong `app/assets/` hiện chỉ phù hợp với xe tải đông lạnh, hai cấu hình cứu hộ và xe bồn nước; mỗi xe dùng tối đa bốn ảnh. Những cấu hình chưa có ảnh phù hợp hiển thị hình minh họa có ghi chú, không mượn ảnh của loại xe khác. Trang chủ chọn các xe có ảnh để giới thiệu; trang `/xe` có toàn bộ danh mục. Công cụ so sánh chỉ đối chiếu dữ liệu đang hiển thị, không thay thế thông số đã xác minh. Thông tin nguồn tham khảo không xác nhận tình trạng xe đang bán.
 
 Thông tin xe được khai báo tại `app/data/vehicles.ts`; ảnh xe tại `app/assets/` và ánh xạ ảnh tại `app/data/vehicle-images.ts`; bài viết tại `app/data/articles.ts`. Trước khi đưa website vào hoạt động, cần:
 

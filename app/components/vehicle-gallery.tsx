@@ -12,19 +12,14 @@ type VehicleGalleryProps = {
   badge: string;
 };
 
-const minimumGalleryImages = 4;
-
 export default function VehicleGallery({
   artwork,
   images,
   name,
   badge,
 }: VehicleGalleryProps) {
-  const galleryImages: (string | null)[] = [...images];
-  while (galleryImages.length < minimumGalleryImages) galleryImages.push(null);
-
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const selectedImage = galleryImages[selectedIndex];
+  const selectedImage = images[selectedIndex];
 
   return (
     <div className="vehicle-gallery">
@@ -32,7 +27,7 @@ export default function VehicleGallery({
         <span className="vehicle-badge"><i />{badge}</span>
         {selectedImage ? (
           <Image
-            alt={`${name} - ảnh ${selectedIndex + 1}`}
+            alt={`Ảnh tham khảo ${name} - ảnh ${selectedIndex + 1}`}
             className="gallery-main-image"
             fill
             priority
@@ -46,35 +41,27 @@ export default function VehicleGallery({
           </>
         )}
       </div>
-      <div className="gallery-thumbnails" aria-label={`Thư viện ảnh ${name}`}>
-        {galleryImages.map((image, index) => (
-          <button
-            aria-label={`Hiển thị ảnh ${index + 1} của ${name}${image ? "" : " (hình minh họa)"}`}
-            aria-pressed={selectedIndex === index}
-            className="gallery-thumbnail"
-            key={`${image ?? "illustration"}-${index}`}
-            onClick={() => setSelectedIndex(index)}
-            type="button"
-          >
-            {image ? (
-              <Image
-                alt=""
-                fill
-                sizes="100px"
-                src={image}
-              />
-            ) : (
-              <>
-                <VehicleArtwork kind={artwork} />
-                <span>Minh họa</span>
-              </>
-            )}
-          </button>
-        ))}
-      </div>
-      {images.length === 0 && (
-        <p className="gallery-note">Hình minh họa; ảnh thực tế sẽ hiển thị tại đây khi được cập nhật.</p>
+      {images.length > 1 && (
+        <div className="gallery-thumbnails" aria-label={`Thư viện ảnh ${name}`}>
+          {images.map((image, index) => (
+            <button
+              aria-label={`Hiển thị ảnh ${index + 1} của ${name}`}
+              aria-pressed={selectedIndex === index}
+              className="gallery-thumbnail"
+              key={image}
+              onClick={() => setSelectedIndex(index)}
+              type="button"
+            >
+              <Image alt="" fill sizes="100px" src={image} />
+            </button>
+          ))}
+        </div>
       )}
+      <p className="gallery-note">
+        {images.length > 0
+          ? `${images.length} ảnh tham khảo; vui lòng xác nhận ảnh và cấu hình xe thực tế trước khi giao dịch.`
+          : "Hình minh họa cho nhóm xe; chưa có ảnh thực tế phù hợp với cấu hình này."}
+      </p>
     </div>
   );
 }

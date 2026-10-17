@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import ContactForm from "../components/contact-form";
+import SampleContactInfo from "../components/sample-contact-info";
 import SiteFooter from "../components/site-footer";
 import SiteHeader from "../components/site-header";
 
 export const metadata: Metadata = {
   title: "Liên hệ tư vấn xe",
-  description: "Gửi nhu cầu để xem trước yêu cầu tư vấn xe tải và xe chuyên dụng. Biểu mẫu hiện chưa gửi dữ liệu.",
+  description: "Gửi yêu cầu tư vấn xe tải và xe chuyên dụng qua biểu mẫu liên hệ.",
 };
 
 export default function ContactPage() {
@@ -22,7 +23,7 @@ export default function ContactPage() {
               <span className="section-kicker">LIÊN HỆ &amp; TƯ VẤN</span>
               <h1>Bắt đầu từ nhu cầu<br /><span>của bạn.</span></h1>
             </div>
-            <p>Chia sẻ loại xe và mục đích sử dụng. Kênh liên hệ chính thức sẽ được cập nhật sau khi doanh nghiệp xác nhận thông tin.</p>
+            <p>Chia sẻ loại xe và mục đích sử dụng qua biểu mẫu. Thông tin liên hệ hiển thị hiện là dữ liệu mẫu, chưa phải kênh liên hệ thực tế.</p>
           </div>
 
           <div className="contact-layout">
@@ -38,8 +39,8 @@ export default function ContactPage() {
               <div className="contact-channel">
                 <span className="channel-icon" aria-hidden="true">i</span>
                 <div>
-                  <strong>Thông tin liên hệ doanh nghiệp</strong>
-                  <p>Hotline, email, địa chỉ showroom và bản đồ chưa được cấu hình do chưa có thông tin xác nhận.</p>
+                  <strong>Kênh liên hệ tham khảo</strong>
+                  <SampleContactInfo />
                 </div>
               </div>
             </aside>

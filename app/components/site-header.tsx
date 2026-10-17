@@ -36,7 +36,7 @@ export default function SiteHeader() {
           </span>
           <div className="topbar-info">
             <span><PinIcon /> Tư vấn và hỗ trợ khách hàng toàn quốc</span>
-            <Link href="/lien-he">Trao đổi với chuyên viên <ArrowIcon /></Link>
+            <Link href="/lien-he#contact-form">Gửi yêu cầu tư vấn <ArrowIcon /></Link>
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export default function SiteHeader() {
         <nav className="main-nav" aria-label="Điều hướng chính">
           {links.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
         </nav>
-        <Link className="header-contact" href="/lien-he">Nhận tư vấn <ArrowIcon /></Link>
+        <Link className="header-contact" href="/lien-he#contact-form">Gửi yêu cầu tư vấn <ArrowIcon /></Link>
       </header>
     </>
   );

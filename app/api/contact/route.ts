@@ -1,12 +1,6 @@
-import { getVehicleBySlug } from "../../data/vehicles";
+import { contactVehicleCategories, getVehicleBySlug } from "../../data/vehicles";
 
-const allowedCategories = new Set([
-  "Xe tải",
-  "Xe chữa cháy",
-  "Xe cứu hộ",
-  "Xe bồn / xe môi trường",
-  "Khác / cần tư vấn",
-]);
+const allowedCategories = new Set<string>(contactVehicleCategories);
 
 type ContactSubmission = {
   name: string;

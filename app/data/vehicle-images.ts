@@ -32,8 +32,35 @@ import waterTanker01 from "../assets/xebonchonuoctuoiduong/1792026720038_5605664
 import waterTanker02 from "../assets/xebonchonuoctuoiduong/1792026720081_5605664729049142053_5605664729049142053_64651d8f5a48497d874ff49447fd53f5.jpg";
 import waterTanker03 from "../assets/xebonchonuoctuoiduong/1792026720123_5605664729049142053_5605664729049142053_75d0bcfc1400bfc133343b16575f03e7.jpg";
 import waterTanker04 from "../assets/xebonchonuoctuoiduong/1792026720161_5605664729049142053_5605664729049142053_33694b7d82574d1355b3b0f289241cc3.jpg";
+import fawJ6L02 from "../assets/faw-j6l/faw-j6l-02.png";
+import fawJ6L03 from "../assets/faw-j6l/faw-j6l-03.png";
+import isuzuFire01 from "../assets/xe-chua-chay-isuzu-4-khoi/isuzu-fire-01.png";
+import isuzuFire02 from "../assets/xe-chua-chay-isuzu-4-khoi/isuzu-fire-02.png";
+import fawCrane01 from "../assets/faw-jh6-gan-cau/faw-jh6-crane-01.png";
+import fawCrane02 from "../assets/faw-jh6-gan-cau/faw-jh6-crane-02.png";
+import dongfengFire25_01 from "../assets/xe-chua-chay-dongfeng-25/dongfeng-fire-25-01.png";
+import dongfengFire25_02 from "../assets/xe-chua-chay-dongfeng-25/dongfeng-fire-25-02.png";
+import dongfengFire4_01 from "../assets/xe-chua-chay-dongfeng-4/dongfeng-fire-4-01.jpg";
+import dongfengFire4_02 from "../assets/xe-chua-chay-dongfeng-4/dongfeng-fire-4-02.png";
+import dongfengFire4_03 from "../assets/xe-chua-chay-dongfeng-4/dongfeng-fire-4-03.png";
+import dongfengFire65_01 from "../assets/xe-chua-chay-dongfeng-65/dongfeng-fire-65-01.jpg";
+import dongfengFire65_02 from "../assets/xe-chua-chay-dongfeng-65/dongfeng-fire-65-02.jpg";
+import fotonLift01 from "../assets/foton-aumark-9t-nang-dau/foton-lift-01.png";
+import fotonWaste7_01 from "../assets/xe-hut-chat-thai-foton-7/foton-waste-7-01.png";
+import fotonWaste7_02 from "../assets/xe-hut-chat-thai-foton-7/foton-waste-7-02.png";
+import isuzuSweeper55_01 from "../assets/xe-quet-duong-isuzu-55/isuzu-sweeper-55-01.png";
+import isuzuSweeper55_02 from "../assets/xe-quet-duong-isuzu-55/isuzu-sweeper-55-02.png";
 
 export const vehicleImages = {
+  fawJ6L: [fawJ6L02.src, fawJ6L03.src],
+  isuzuFireTruck: [isuzuFire01.src, isuzuFire02.src],
+  fawCraneTruck: [fawCrane01.src, fawCrane02.src],
+  dongfengFire25: [dongfengFire25_01.src, dongfengFire25_02.src],
+  dongfengFire4: [dongfengFire4_01.src, dongfengFire4_02.src, dongfengFire4_03.src],
+  dongfengFire65: [dongfengFire65_01.src, dongfengFire65_02.src],
+  fotonLiftHead: [fotonLift01.src],
+  fotonWasteTruck7: [fotonWaste7_01.src, fotonWaste7_02.src],
+  isuzuSweeper55: [isuzuSweeper55_01.src, isuzuSweeper55_02.src],
   refrigeratedTruck: [
     refrigerated01.src,
     refrigerated02.src,

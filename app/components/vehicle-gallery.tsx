@@ -59,7 +59,7 @@ export default function VehicleGallery({
       )}
       <p className="gallery-note">
         {images.length > 0
-          ? `${images.length} ảnh tham khảo; vui lòng xác nhận ảnh và cấu hình xe thực tế trước khi giao dịch.`
+          ? `${images.length} ảnh tham khảo; vui lòng xác nhận cấu hình xe thực tế. Logo hoặc thông tin liên hệ xuất hiện trong ảnh (nếu có) thuộc nguồn ảnh, không phải thông tin của website này.`
           : "Hình minh họa cho nhóm xe; chưa có ảnh thực tế phù hợp với cấu hình này."}
       </p>
     </div>

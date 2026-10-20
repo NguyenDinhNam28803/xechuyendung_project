@@ -104,7 +104,7 @@ export const vehicles: Vehicle[] = [
     category: "Xe tải",
     description: "Xe tải FAW J6L thùng bạt 2 tầng, trang bị bửng nâng thủy lực theo thông tin sản phẩm tham khảo.",
     artwork: "cargo",
-    images: [],
+    images: vehicleImages.fawJ6L,
     badge: "Thông tin tham khảo",
     useCase: "Vận chuyển hàng hóa cần không gian xếp dỡ linh hoạt.",
     highlights: [
@@ -134,7 +134,7 @@ export const vehicles: Vehicle[] = [
     category: "Xe chữa cháy",
     description: "Xe chữa cháy Isuzu cabin đôi, cấu hình bồn nước và bọt cùng thiết bị chuyên dùng theo thông tin tham khảo.",
     artwork: "fire",
-    images: [],
+    images: vehicleImages.isuzuFireTruck,
     badge: "Thông tin tham khảo",
     useCase: "Phục vụ phương án chữa cháy theo điều kiện công trình và đơn vị sử dụng.",
     highlights: [
@@ -222,6 +222,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Vận chuyển hàng hóa kết hợp nâng hạ tại công trường; tải thực tế phụ thuộc hồ sơ đăng kiểm, vị trí lắp cẩu và cấu hình thân xe.",
       make: "FAW",
       description: "Cấu hình tham khảo FAW JH6 4 chân 8×4, thùng lửng và cẩu Soosan 15 tấn. Trang nguồn nêu tải dự kiến, cần đối chiếu với hồ sơ hoàn công của xe cụ thể.",
+      images: vehicleImages.fawCraneTruck,
       badge: "Thông tin tham khảo",
       highlights: [
         "Xe nền FAW JH6 8×4, cấu hình 4 chân",
@@ -280,6 +281,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Cấu hình nhỏ gọn được trang nguồn giới thiệu cho khu vực cần xe chữa cháy cơ động; phương án sử dụng phải được đơn vị chuyên môn xác nhận.",
       make: "DONGFENG",
       description: "Xe chữa cháy Dongfeng 2,5 khối, cabin đôi 5 chỗ, bồn nước và foam theo mô tả của trang tham khảo.",
+      images: vehicleImages.dongfengFire25,
       badge: "Thông tin tham khảo",
       highlights: [
         "Bồn danh nghĩa 2,5 m³ gồm 2 m³ nước và 0,5 m³ foam theo trang nguồn",
@@ -308,6 +310,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Cấu hình chữa cháy chuyên dùng có bồn nước và foam; cần đánh giá kích thước, khả năng tiếp cận và yêu cầu triển khai theo từng địa điểm.",
       make: "DONGFENG",
       description: "Xe chữa cháy Dongfeng 4 khối nhập khẩu theo nội dung trang tham khảo, dùng khung gầm D7 cabin đôi.",
+      images: vehicleImages.dongfengFire4,
       badge: "Thông tin tham khảo",
       highlights: [
         "Bồn danh nghĩa 4 m³ gồm 3 m³ nước và 1 m³ foam",
@@ -335,6 +338,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Cấu hình xe chữa cháy dung tích lớn theo trang tham khảo; cần đối chiếu điều kiện vận hành, chứng nhận thiết bị và tải trọng cho phép.",
       make: "DONGFENG",
       description: "Xe chữa cháy Dongfeng cabin đôi D9, model CLW5160GXFDL60/DF theo trang tham khảo. Nguồn có chỗ ghi dung tích 6,5 m³ nhưng phần mô tả bồn nêu 5 m³ nước và 1 m³ foam, cần xác minh.",
+      images: vehicleImages.dongfengFire65,
       badge: "Thông tin tham khảo",
       highlights: [
         "Trang sản phẩm đề tên xe 6,5 khối; nội dung lại nêu bồn nước 5 m³ + foam 1 m³ (tổng 6 m³)",
@@ -389,6 +393,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Phương án chở máy hoặc phương tiện bằng sàn nâng đầu, kết hợp tời và càng kéo; phải kiểm tra khả năng chịu tải và điều kiện an toàn theo thiết kế được duyệt.",
       make: "FOTON",
       description: "Foton Aumark 9 tấn cấu hình sàn fooc nâng đầu và càng kéo. Trang tham khảo mô tả thiết bị chuyên dùng nhưng không cung cấp đủ thông số xe nền để xác nhận tải khai thác.",
+      images: vehicleImages.fotonLiftHead,
       badge: "Thông tin tham khảo",
       highlights: [
         "Sàn nâng đầu kết hợp càng kéo và hệ thống điều khiển thủy lực",
@@ -447,6 +452,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Xe xi téc chở chất thải với bồn danh nghĩa 7 m³ theo trang tham khảo; cần xác nhận loại chất thải được phép chuyên chở, hệ thống hút và yêu cầu môi trường.",
       make: "FOTON",
       description: "Xe hút chất thải Foton 7 khối, model YFY5120GSS5BJ. Các số liệu tải trọng và kích thước trên nguồn đều ghi dự kiến.",
+      images: vehicleImages.fotonWasteTruck7,
       badge: "Thông tin tham khảo",
       highlights: [
         "Bồn xi téc dung tích dự kiến 7 m³",
@@ -484,6 +490,7 @@ export const vehicles: Vehicle[] = [
       useCase: "Xe quét hút bụi đường với khoang chứa rác và bồn nước dập bụi; cần xác nhận thiết kế chổi, hệ thống hút và tiêu chuẩn khí thải của xe cụ thể.",
       make: "ISUZU",
       description: "Xe quét đường hút bụi Isuzu dung tích tổng 5,5 m³ theo trang tham khảo, gồm khoang rác và bồn nước. Trang có các mô tả kỹ thuật tổng quát cần xác minh với đúng phiên bản.",
+      images: vehicleImages.isuzuSweeper55,
       badge: "Thông tin tham khảo",
       highlights: [
         "Tổng thể tích thùng chuyên dùng 5.500 lít theo trang sản phẩm",

@@ -17,7 +17,11 @@ const maximumComparedVehicles = 3;
 type CatalogCategory = "Tất cả" | VehicleCategory;
 
 function normalize(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("vi");
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[đĐ]/g, "d")
+    .toLocaleLowerCase("vi");
 }
 
 export default function VehicleCatalog() {
@@ -47,7 +51,17 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCa
         activeCategory === "Tất cả" || vehicle.category === activeCategory;
       const matchesSearch =
         !query ||
-        normalize(`${vehicle.name} ${vehicle.make} ${vehicle.category} ${vehicle.description}`).includes(query);
+        normalize(
+          [
+            vehicle.name,
+            vehicle.make,
+            vehicle.category,
+            vehicle.description,
+            vehicle.useCase,
+            ...vehicle.highlights,
+            ...vehicle.knownDetails.flatMap(({ label, value }) => [label, value]),
+          ].join(" "),
+        ).includes(query);
       return matchesCategory && matchesSearch;
     });
   }, [activeCategory, search]);
@@ -65,7 +79,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCa
       <div className="catalog-controls" id="danh-muc">
         <div className="catalog-title">
           <strong>XE THEO NHU CẦU</strong>
-          <span>{filteredVehicles.length} dòng xe</span>
+          <span aria-atomic="true" aria-live="polite">{filteredVehicles.length} dòng xe</span>
         </div>
         <div className="catalog-tools">
           <div className="category-tabs" role="group" aria-label="Lọc theo danh mục">
@@ -89,7 +103,8 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCa
             <input
               aria-label="Tìm kiếm xe"
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm tên xe, hãng xe..."
+              placeholder="Tìm xe, hãng, công năng..."
+              type="search"
               value={search}
             />
           </label>

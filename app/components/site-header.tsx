@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SiteNavigation from "./site-navigation";
 
 function ArrowIcon() {
   return (
@@ -46,9 +47,7 @@ export default function SiteHeader() {
           <span className="brand-mark"><span /></span>
           <span className="brand-name">XECHUYENDUNG<span>.VN</span><small>GIẢI PHÁP VẬN TẢI</small></span>
         </Link>
-        <nav className="main-nav" aria-label="Điều hướng chính">
-          {links.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
-        </nav>
+        <SiteNavigation links={links} />
         <Link className="header-contact" href="/lien-he#contact-form">Gửi yêu cầu tư vấn <ArrowIcon /></Link>
       </header>
     </>

@@ -8,7 +8,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 
 - Trang chủ giới thiệu các nhóm xe, nội dung hướng dẫn và lối vào trang liên hệ.
 - Banner trang chủ dùng ảnh xe đông lạnh thật có trong asset, ghi rõ là ảnh tham khảo; các trang Dịch vụ, Tư vấn mua xe, Giới thiệu và Tin tức có bố cục responsive, chữ dễ đọc và thao tác rõ ràng.
-- Danh mục xe hỗ trợ lọc theo loại, tìm kiếm theo tên, thương hiệu hoặc mô tả, và chọn tối đa ba xe để đối chiếu thông tin hiện có.
+- Danh mục xe hỗ trợ lọc theo loại, tìm kiếm không phân biệt dấu theo tên, thương hiệu, mô tả, công năng và thông tin cấu hình, đồng thời chọn tối đa ba xe để đối chiếu thông tin hiện có.
 - Một số trang xe có ảnh trong `app/assets/` và thông tin tham khảo với liên kết nguồn; các thông tin này vẫn cần được xác nhận theo phiên bản và hồ sơ thực tế.
 - Trang chi tiết cho từng xe trình bày thông tin đã biết, công năng, lưu ý và liên kết tư vấn theo xe đang xem.
 - Trang liên hệ gửi yêu cầu tư vấn tới Google Sheets qua API phía máy chủ; báo trạng thái gửi thành công hoặc lỗi.

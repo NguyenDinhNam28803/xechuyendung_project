@@ -6,7 +6,7 @@ import Link from "next/link";
 import { vehicleCategories, vehicles, type Vehicle } from "../data/vehicles";
 
 const bannerImageCount = 10;
-const bannerInterval = 6000;
+const bannerInterval = 3000;
 
 type BannerSlide = {
   vehicle: Vehicle;

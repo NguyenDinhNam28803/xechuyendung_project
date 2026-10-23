@@ -23,7 +23,7 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 | `/` | Trang chủ |
 | `/xe` | Danh mục xe |
 | `/xe/[slug]` | Chi tiết xe |
-| `/lien-he` | Thông tin liên hệ mẫu và form yêu cầu tư vấn; gửi dữ liệu khi API được cấu hình |
+| `/lien-he` | Thông tin liên hệ Phước Nguyễn và form yêu cầu tư vấn; gửi dữ liệu khi API được cấu hình |
 | `/gioi-thieu` | Giới thiệu dự án |
 | `/dich-vu` | Các bước tư vấn tham khảo |
 | `/tu-van-mua-xe` | Checklist chuẩn bị khi tìm mua xe |
@@ -37,7 +37,7 @@ Danh mục hiện có 18 dòng xe thuộc bốn nhóm được định nghĩa t�
 
 Thông tin xe được khai báo tại `app/data/vehicles.ts`; ảnh xe tại `app/assets/` và ánh xạ ảnh tại `app/data/vehicle-images.ts`; bài viết tại `app/data/articles.ts`. Trước khi đưa website vào hoạt động, cần:
 
-1. Xác nhận tên pháp nhân, địa chỉ, hotline, email, giờ làm việc, showroom và các kênh mạng xã hội.
+1. Xác nhận tên pháp nhân, địa chỉ, giờ làm việc, showroom và các kênh mạng xã hội. Thông tin đầu mối Phước Nguyễn, số điện thoại và email đã được cung cấp để hiển thị.
 2. Thay dữ liệu minh họa bằng danh sách xe, ảnh, phiên bản và thông số đã được doanh nghiệp kiểm duyệt.
 3. Xác nhận phạm vi dịch vụ, báo giá, tình trạng hàng, giao nhận, bảo hành, thanh toán và hồ sơ pháp lý.
 4. Cấu hình API nhận yêu cầu và hoàn thiện chính sách quyền riêng tư, bao gồm đơn vị chịu trách nhiệm, thời hạn lưu trữ và đầu mối xử lý yêu cầu dữ liệu.

@@ -119,7 +119,10 @@ export default function Home() {
             <span className="section-kicker">BẠN ĐANG TÌM DÒNG XE NÀO?</span>
             <h2>Chia sẻ nhu cầu.<br /><span>Cùng làm rõ cấu hình.</span></h2>
           </div>
-          <p>Gửi yêu cầu bằng biểu mẫu liên hệ. Hotline, email và địa chỉ đang hiển thị dữ liệu mẫu, chưa dùng để liên hệ thực tế.</p>
+          <p>
+            Liên hệ Phước Nguyễn: <a href="tel:0977170705">0977170705</a> ·{" "}
+            <a href="mailto:phuocnguyen1108@gmail.com">phuocnguyen1108@gmail.com</a>, hoặc gửi yêu cầu qua biểu mẫu.
+          </p>
           <Link className="button button-primary" href="/lien-he#contact-form">Gửi yêu cầu tư vấn <span aria-hidden="true">→</span></Link>
         </section>
       </main>

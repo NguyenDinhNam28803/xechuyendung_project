@@ -70,7 +70,7 @@ export default function ContactForm() {
 
       <div className="form-demo-notice">
         <span aria-hidden="true">i</span>
-        <p><strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Thông tin hotline và email mẫu không dùng để liên hệ thực tế.</p>
+        <p><strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Bạn cũng có thể liên hệ trực tiếp qua số điện thoại và email bên cạnh.</p>
       </div>
 
       {vehicle && (
@@ -103,7 +103,7 @@ export default function ContactForm() {
         </div>
         <div className="form-field">
           <label htmlFor="contact-phone">Số điện thoại <span>*</span></label>
-          <input autoComplete="tel" id="contact-phone" inputMode="tel" maxLength={20} name="phone" placeholder="Ví dụ: 09xx xxx xxx" required type="tel" />
+          <input autoComplete="tel" id="contact-phone" inputMode="tel" maxLength={20} name="phone" placeholder="Ví dụ: 0901 234 567" required type="tel" />
         </div>
         <div className="form-field">
           <label htmlFor="contact-category">Dòng xe quan tâm <span>*</span></label>

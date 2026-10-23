@@ -90,7 +90,7 @@ export default async function VehicleDetailPage({ params }: VehiclePageProps) {
         <div className="page-cta detail-contact-cta">
           <div>
             <strong>Cần tư vấn hoặc báo giá xe này?</strong>
-            <span>Gửi yêu cầu kèm theo dòng xe đang xem; thông tin liên hệ mẫu trên website chưa sử dụng được.</span>
+            <span>Gửi yêu cầu kèm theo dòng xe đang xem hoặc liên hệ trực tiếp với Phước Nguyễn qua điện thoại và email.</span>
           </div>
           <Link className="button button-primary" href={`/lien-he?xe=${vehicle.slug}#contact-form`}>
             Gửi yêu cầu tư vấn <span aria-hidden="true">→</span>

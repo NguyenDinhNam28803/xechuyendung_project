@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import ContactInfo from "../components/contact-info";
 import ContactForm from "../components/contact-form";
-import SampleContactInfo from "../components/sample-contact-info";
 import SiteFooter from "../components/site-footer";
 import SiteHeader from "../components/site-header";
 
@@ -23,7 +23,7 @@ export default function ContactPage() {
               <span className="section-kicker">LIÊN HỆ &amp; TƯ VẤN</span>
               <h1>Bắt đầu từ nhu cầu<br /><span>của bạn.</span></h1>
             </div>
-            <p>Chia sẻ loại xe và mục đích sử dụng qua biểu mẫu. Thông tin liên hệ hiển thị hiện là dữ liệu mẫu, chưa phải kênh liên hệ thực tế.</p>
+            <p>Gọi điện, gửi email trực tiếp hoặc chia sẻ loại xe và mục đích sử dụng qua biểu mẫu.</p>
           </div>
 
           <div className="contact-layout">
@@ -39,8 +39,8 @@ export default function ContactPage() {
               <div className="contact-channel">
                 <span className="channel-icon" aria-hidden="true">i</span>
                 <div>
-                  <strong>Kênh liên hệ tham khảo</strong>
-                  <SampleContactInfo />
+                  <strong>Thông tin liên hệ</strong>
+                  <ContactInfo />
                 </div>
               </div>
             </aside>

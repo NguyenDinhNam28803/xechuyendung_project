@@ -1183,74 +1183,71 @@ input {
   line-height: 1.7;
 }
 
-.sample-contact-info {
+.contact-info {
   position: relative;
   z-index: 1;
   margin-top: 10px;
 }
 
-.sample-contact-info dl {
+.contact-info dl {
   display: grid;
   gap: 8px;
   margin: 0;
 }
 
-.sample-contact-info dl > div {
+.contact-info dl > div {
   display: grid;
   grid-template-columns: minmax(82px, .7fr) 1fr;
   gap: 8px;
   align-items: start;
 }
 
-.sample-contact-info dt {
+.contact-info dt {
   color: #b6c2c5;
-  font-size: 9px;
+  font-size: 14px;
 }
 
-.sample-contact-info dd {
+.contact-info dd {
   margin: 0;
   color: #fff;
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 650;
   overflow-wrap: anywhere;
 }
 
-.sample-contact-info > p {
-  max-width: 300px;
-  margin: 10px 0 0;
-  color: #f2c66e;
-  font-size: 9px;
-  line-height: 1.65;
-}
-
-.sample-contact-info-compact {
+.contact-info-compact {
   width: 100%;
   margin-top: 0;
 }
 
-.sample-contact-info-compact dl {
+.contact-info-compact dl {
   gap: 5px;
 }
 
-.sample-contact-info-compact dl > div {
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 6px;
+.contact-info-compact dl > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
 }
 
-.sample-contact-info-compact dt {
+.contact-info-compact dt {
   color: #aebdc2;
-  font-size: 8px;
+  font-size: 13px;
 }
 
-.sample-contact-info-compact dd {
+.contact-info-compact dd {
   color: #f5f7f5;
-  font-size: 8px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.sample-contact-info-compact > p {
-  margin-top: 8px;
+.contact-info a {
+  text-decoration: underline;
+  text-decoration-color: rgba(242, 198, 110, .65);
+  text-underline-offset: 3px;
+}
+
+.contact-info a:hover {
   color: #f2c66e;
-  font-size: 8px;
 }
 
 .contact-form-panel {
@@ -1594,7 +1591,7 @@ input {
   line-height: 1.7;
 }
 
-.footer-contact .sample-contact-info {
+.footer-contact .contact-info {
   margin-top: 2px;
 }
 

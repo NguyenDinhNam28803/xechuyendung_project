@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
+import HomeHeroBanner from "./components/home-hero-banner";
 import SiteFooter from "./components/site-footer";
 import SiteHeader from "./components/site-header";
 import VehicleArtwork from "./components/vehicle-artwork";
-import { vehicleImages } from "./data/vehicle-images";
 import { vehicles } from "./data/vehicles";
 
 const benefits = [
@@ -33,22 +33,7 @@ export default function Home() {
               <span><strong>Tư vấn theo nhu cầu</strong><small>Thông số và cấu hình cần xác nhận theo từng xe</small></span>
             </div>
           </div>
-          <div className="hero-scene">
-            <div className="scene-circle" />
-            <Image
-              alt="Xe tải đông lạnh Hyundai Mighty N550LA trong ảnh tham khảo"
-              className="hero-real-photo"
-              fill
-              priority
-              sizes="(max-width: 760px) 100vw, 50vw"
-              src={vehicleImages.refrigeratedTruck[0]}
-            />
-            <div className="scene-label"><span /> ẢNH XE THỰC TẾ · THAM KHẢO</div>
-            <div className="scene-caption">
-              <span>XE TẢI ĐÔNG LẠNH</span>
-              <strong>Hyundai Mighty N550LA</strong>
-            </div>
-          </div>
+          <HomeHeroBanner />
         </section>
 
         <section className="benefits" id="dich-vu" aria-label="Hỗ trợ khách hàng">

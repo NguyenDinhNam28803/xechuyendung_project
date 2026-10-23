@@ -4190,6 +4190,12 @@ textarea:focus-visible {
   z-index: 0;
   object-fit: cover;
   object-position: center 52%;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+
+.hero-real-photo.is-loaded {
+  opacity: 1;
 }
 
 .hero-scene .scene-circle {
@@ -4216,8 +4222,10 @@ textarea:focus-visible {
 }
 
 .hero-scene .scene-caption {
-  right: 15px;
+  right: auto;
+  left: 15px;
   bottom: 15px;
+  max-width: calc(100% - 190px);
   gap: 5px;
   padding: 12px 15px;
   background: rgba(18, 43, 62, .86);
@@ -4233,6 +4241,58 @@ textarea:focus-visible {
 .hero-scene .scene-caption strong {
   color: #fff;
   font-size: 18px;
+}
+
+.hero-banner-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+.hero-banner-controls {
+  position: absolute;
+  right: 15px;
+  bottom: 15px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 4px;
+  background: rgba(18, 43, 62, .88);
+  color: #fff;
+}
+
+.hero-banner-control {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 3px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.hero-banner-control:hover {
+  background: rgba(255, 255, 255, .16);
+}
+
+.hero-banner-toggle {
+  font-size: 14px;
+}
+
+.hero-banner-count {
+  min-width: 48px;
+  color: #f2c66e;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .info-page .page-intro {
@@ -4498,8 +4558,10 @@ textarea:focus-visible {
   }
 
   .hero-scene .scene-caption {
-    right: 10px;
+    right: auto;
+    left: 10px;
     bottom: 10px;
+    max-width: calc(100% - 150px);
     padding: 9px 11px;
   }
 
@@ -4509,6 +4571,24 @@ textarea:focus-visible {
 
   .hero-scene .scene-caption strong {
     font-size: 15px;
+  }
+
+  .hero-banner-controls {
+    right: 10px;
+    bottom: 10px;
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .hero-banner-control {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .hero-banner-count {
+    min-width: 42px;
+    font-size: 11px;
   }
 
   .info-page .page-intro {

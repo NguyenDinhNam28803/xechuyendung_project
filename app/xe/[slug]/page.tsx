@@ -1,28 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import SiteFooter from "../../components/site-footer";
 import SiteHeader from "../../components/site-header";
 import VehicleGallery from "../../components/vehicle-gallery";
-import { getVehicleBySlug, vehicles } from "../../data/vehicles";
+import { getPublicVehicle } from "../../lib/content";
 
 type VehiclePageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return vehicles.map((vehicle) => ({ slug: vehicle.slug }));
-}
-
 export async function generateMetadata({ params }: VehiclePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const vehicle = getVehicleBySlug(slug);
+  const vehicle = await getPublicVehicle(slug);
   return vehicle
     ? { title: vehicle.name, description: vehicle.description }
     : { title: "Không tìm thấy xe" };
 }
 
-export default async function VehicleDetailPage({ params }: VehiclePageProps) {
+export default function VehicleDetailPage({ params }: VehiclePageProps) {
+  return (
+    <Suspense fallback={<main className="content-page">Đang tải thông tin xe...</main>}>
+      <VehicleDetailContent params={params} />
+    </Suspense>
+  );
+}
+
+async function VehicleDetailContent({ params }: VehiclePageProps) {
   const { slug } = await params;
-  const vehicle = getVehicleBySlug(slug);
+  const vehicle = await getPublicVehicle(slug);
   if (!vehicle) notFound();
 
   return (

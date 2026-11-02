@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import SiteFooter from "../components/site-footer";
 import SiteHeader from "../components/site-header";
-import { articles } from "../data/articles";
+import { getPublicArticles } from "../lib/content";
 
 export const metadata: Metadata = {
   title: "Kiến thức và hướng dẫn",
@@ -10,6 +11,15 @@ export const metadata: Metadata = {
 };
 
 export default function NewsPage() {
+  return (
+    <Suspense fallback={<main className="content-page">Đang tải bài viết...</main>}>
+      <NewsPageContent />
+    </Suspense>
+  );
+}
+
+async function NewsPageContent() {
+  const articles = await getPublicArticles();
   return (
     <>
       <SiteHeader />

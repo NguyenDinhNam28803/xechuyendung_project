@@ -1,10 +1,11 @@
-import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
+import ContentImage from "./components/content-image";
 import HomeHeroBanner from "./components/home-hero-banner";
 import SiteFooter from "./components/site-footer";
 import SiteHeader from "./components/site-header";
 import VehicleArtwork from "./components/vehicle-artwork";
-import { vehicles } from "./data/vehicles";
+import { getPublicVehicles } from "./lib/content";
 
 const benefits = [
   { number: "01", title: "Tư vấn cấu hình", description: "Chọn xe theo mục đích và điều kiện vận hành." },
@@ -13,6 +14,15 @@ const benefits = [
 ];
 
 export default function Home() {
+  return (
+    <Suspense fallback={<main className="content-page">Đang tải nội dung...</main>}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+async function HomeContent() {
+  const vehicles = await getPublicVehicles();
   const featuredVehicles = vehicles.filter((vehicle) => vehicle.images.length > 0).slice(0, 3);
 
   return (
@@ -33,7 +43,7 @@ export default function Home() {
               <span><strong>Tư vấn theo nhu cầu</strong><small>Thông số và cấu hình cần xác nhận theo từng xe</small></span>
             </div>
           </div>
-          <HomeHeroBanner />
+          <HomeHeroBanner vehicles={vehicles} />
         </section>
 
         <section className="benefits" id="dich-vu" aria-label="Hỗ trợ khách hàng">
@@ -60,7 +70,7 @@ export default function Home() {
                 <Link className={`card-image card-image-${vehicle.artwork}`} href={`/xe/${vehicle.slug}`} aria-label={`Xem ${vehicle.name}`}>
                   <span className="vehicle-badge"><i />{vehicle.badge}</span>
                   {vehicle.images[0] ? (
-                    <Image
+                    <ContentImage
                       alt={vehicle.name}
                       className="card-photo"
                       fill

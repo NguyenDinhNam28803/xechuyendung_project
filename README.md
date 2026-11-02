@@ -48,6 +48,8 @@ Thông tin xe tham khảo không phải thông tin doanh nghiệp của website 
 ## Công nghệ
 
 - [Next.js](https://nextjs.org) App Router
+- [NestJS](https://nestjs.com) REST API, class-validator và JWT
+- PostgreSQL và Prisma ORM
 - React
 - TypeScript
 - Tailwind CSS và CSS tùy chỉnh
@@ -65,14 +67,55 @@ Mở [http://localhost:3000](http://localhost:3000). Thay đổi trong thư mụ
 
 ### Kết nối form liên hệ với Google Sheets
 
+Form dùng backend Node.js tích hợp trong Next.js tại `app/api/contact/route.ts`, endpoint `POST /api/contact`. Endpoint kiểm tra dữ liệu đầu vào và sự đồng ý trước khi chuyển tiếp yêu cầu tới Google Apps Script; không cần chạy thêm một dịch vụ NestJS/Express riêng. Các biến cấu hình chỉ được đọc phía máy chủ.
+
 1. Tạo một Google Sheet dành riêng cho các yêu cầu tư vấn.
 2. Tạo một dự án tại [Google Apps Script](https://script.google.com/) và chép nội dung `google-apps-script/Code.gs` vào `Code.gs`.
 3. Trong **Project Settings → Script Properties**, thêm `SPREADSHEET_ID` (ID trong URL của Sheet) và `SHARED_SECRET` (một chuỗi ngẫu nhiên dài). Dùng cùng giá trị bí mật cho biến `GOOGLE_SHEETS_SHARED_SECRET` ở bước tiếp theo.
 4. Deploy Apps Script dưới dạng **Web app**, chọn chạy dưới tài khoản của bạn (**Execute as me**) và cho phép truy cập (**Who has access**) phù hợp để máy chủ website gọi được. Sao chép URL `/exec` của deployment.
-5. Tạo `client/.env.local` từ `.env.example`, điền URL `/exec` vào `GOOGLE_APPS_SCRIPT_URL` và cùng bí mật vào `GOOGLE_SHEETS_SHARED_SECRET`. Không dùng tiền tố `NEXT_PUBLIC_` cho bí mật; không commit `.env.local`.
+5. Từ thư mục `client`, sao chép `.env.example` thành `.env.local`, điền URL `/exec` vào `GOOGLE_APPS_SCRIPT_URL` và cùng bí mật vào `GOOGLE_SHEETS_SHARED_SECRET`. Không dùng tiền tố `NEXT_PUBLIC_` cho bí mật; `.env.local` không được commit.
 6. Khởi động lại Next.js. Gửi thử một yêu cầu và xác nhận dòng mới xuất hiện trong Sheet. API kiểm tra dữ liệu và chuyển tiếp ở phía máy chủ; mật khẩu dùng chung không được gửi xuống trình duyệt.
 
 Apps Script sẽ ghi tiêu đề cột ở lần gửi đầu tiên và thêm thời gian nhận, thông tin liên hệ, nhu cầu cùng xe đang quan tâm. Giới hạn/quyền truy cập Sheet nên chỉ cấp cho người cần xử lý khách hàng. Google Apps Script có giới hạn sử dụng và không cung cấp chống spam/rate limit đầy đủ; nếu lượng yêu cầu tăng, cần bổ sung bảo vệ phù hợp hoặc chuyển sang CRM. Trước khi bật form cho khách thật, hoàn thiện thông tin còn thiếu trong trang `/chinh-sach`.
+
+Khi deploy, dùng nền tảng hỗ trợ chạy ứng dụng Next.js trên Node.js và khai báo hai biến môi trường trên trong cấu hình production. Không dùng static export vì endpoint API cần máy chủ xử lý request.
+
+### Backend quản trị xe và tin tức
+
+Backend quản trị nằm trong `server/`, chạy riêng trên cổng `4000`; website Next.js chạy trên cổng `3000`. Dữ liệu xe và bài viết được lưu trong PostgreSQL, không phụ thuộc vào Google Sheets. Trang `/admin` dùng cookie phiên `HttpOnly` và proxy API phía Next.js nên JWT không được lưu trong trình duyệt.
+
+#### Chạy local
+
+1. Từ `client/server`, sao chép `.env.example` thành `.env`. Đổi `POSTGRES_PASSWORD`, đặt cùng mật khẩu trong `DATABASE_URL`, và thay `ADMIN_PASSWORD` (ít nhất 16 ký tự) cùng `JWT_SECRET` (ít nhất 32 ký tự) bằng giá trị ngẫu nhiên mạnh.
+2. Khởi động PostgreSQL (cần Docker Desktop đang chạy):
+
+   ```bash
+   docker compose up -d postgres
+   ```
+
+3. Cài và khởi tạo API:
+
+   ```bash
+   npm install
+   npm run prisma:generate
+   npm run db:migrate:dev
+   npm run start:dev
+   ```
+
+4. Trong cửa sổ terminal khác, từ `client`, sao chép `.env.example` thành `.env.local`, rồi chạy:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+5. Mở `http://localhost:3000/admin`, đăng nhập bằng `ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `server/.env`, rồi chọn **Nhập nội dung mẫu** để sao chép xe và bài viết hiện tại vào PostgreSQL. Hành động nhập chỉ thêm slug chưa tồn tại; nội dung đã chỉnh sửa không bị ghi đè.
+
+API công khai: `GET /api/v1/vehicles`, `GET /api/v1/vehicles/:slug`, `GET /api/v1/articles` và `GET /api/v1/articles/:slug`. CRUD quản trị nằm dưới `/api/v1/admin/vehicles` và `/api/v1/admin/articles`; đăng nhập tại `/api/v1/auth/login`. Các endpoint quản trị yêu cầu Bearer JWT. Xe/bài viết ở trạng thái bản nháp chỉ xuất hiện trong trang quản trị, không được trả về API công khai. Slug phải là chữ thường không dấu, số và dấu gạch nối; danh mục xe được giới hạn theo các nhóm có sẵn trên website.
+
+Next.js đọc `CONTENT_API_URL` từ `.env.local` phía máy chủ. Khi API chưa chạy, trang công khai ghi lỗi vào log và dùng nội dung mẫu tĩnh; khi API đã kết nối, dữ liệu PostgreSQL là nguồn hiển thị. Trên production, đặt biến môi trường trong `server/.env` theo mẫu, cấu hình `CONTENT_API_URL` để Next.js gọi được API, chạy `npm run db:migrate`, rồi chạy API bằng `npm run start:prod`. Không dùng static export.
+
+Ảnh xe trong CMS nhận URL HTTPS hoặc đường dẫn cùng website; ảnh được trình duyệt tải trực tiếp, không qua proxy tối ưu ảnh của server. Hệ thống hiện chưa có chức năng tải ảnh lên.
 
 ### Các lệnh thường dùng
 
@@ -90,6 +133,7 @@ app/
   components/          # Header, footer, form và thành phần danh mục dùng chung
   assets/              # Ảnh xe dùng trong danh mục và trang chi tiết
   data/                # Dữ liệu xe, ánh xạ ảnh và bài viết
+  api/contact/         # Backend nhận và chuyển tiếp yêu cầu tư vấn
   xe/                  # Danh mục xe và trang chi tiết [slug]
   lien-he/             # Trang liên hệ
   gioi-thieu/          # Trang giới thiệu

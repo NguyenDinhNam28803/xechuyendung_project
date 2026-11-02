@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import SiteFooter from "../components/site-footer";
 import SiteHeader from "../components/site-header";
 import VehicleCatalog from "../components/vehicle-catalog";
+import { getPublicVehicles } from "../lib/content";
 
 export const metadata: Metadata = {
   title: "Danh mục xe tải và xe chuyên dụng",
@@ -12,6 +13,15 @@ export const metadata: Metadata = {
 
 export default function VehiclesPage() {
   return (
+    <Suspense fallback={<div className="catalog-loading">Đang tải danh mục xe...</div>}>
+      <VehiclesPageContent />
+    </Suspense>
+  );
+}
+
+async function VehiclesPageContent() {
+  const vehicles = await getPublicVehicles();
+  return (
     <>
       <SiteHeader />
       <main className="content-page">
@@ -19,11 +29,11 @@ export default function VehiclesPage() {
         <section className="page-intro">
           <span className="section-kicker">XE THEO CÔNG NĂNG</span>
           <h1>Tìm dòng xe<br /><span>phù hợp công việc.</span></h1>
-          <p>Khám phá các nhóm xe tiêu biểu, lọc theo công năng hoặc tìm theo tên xe và thương hiệu. Thông tin sản phẩm trên trang hiện là dữ liệu mẫu.</p>
+          <p>Khám phá các nhóm xe, lọc theo công năng hoặc tìm theo tên xe và thương hiệu. Thông số và cấu hình cần được xác nhận theo từng phiên bản thực tế.</p>
         </section>
         <section className="catalog catalog-page">
           <Suspense fallback={<div className="catalog-loading">Đang tải danh mục xe...</div>}>
-            <VehicleCatalog />
+            <VehicleCatalog vehicles={vehicles} />
           </Suspense>
         </section>
         <div className="page-cta">

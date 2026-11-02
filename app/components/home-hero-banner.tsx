@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { vehicleCategories, vehicles, type Vehicle } from "../data/vehicles";
+import ContentImage from "./content-image";
+import { vehicleCategories, type Vehicle } from "../data/vehicles";
 
 const bannerImageCount = 10;
 const bannerInterval = 3000;
@@ -24,9 +24,8 @@ function shuffle<T>(items: T[]) {
   return result;
 }
 
-const vehiclesWithImages = vehicles.filter((vehicle) => vehicle.images.length > 0);
-
-function getRandomSlides(): BannerSlide[] {
+function getRandomSlides(vehicles: Vehicle[]): BannerSlide[] {
+  const vehiclesWithImages = vehicles.filter((vehicle) => vehicle.images.length > 0);
   const categorySelections = vehicleCategories
     .slice(1)
     .map((category) =>
@@ -48,12 +47,12 @@ function getRandomSlides(): BannerSlide[] {
   }));
 }
 
-const initialSlides = vehiclesWithImages.slice(0, bannerImageCount).map((vehicle) => ({
-  vehicle,
-  image: vehicle.images[0],
-}));
-
-export default function HomeHeroBanner() {
+export default function HomeHeroBanner({ vehicles }: { vehicles: Vehicle[] }) {
+  const vehiclesWithImages = vehicles.filter((vehicle) => vehicle.images.length > 0);
+  const initialSlides = vehiclesWithImages.slice(0, bannerImageCount).map((vehicle) => ({
+    vehicle,
+    image: vehicle.images[0],
+  }));
   const [slides, setSlides] = useState(initialSlides);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -63,7 +62,7 @@ export default function HomeHeroBanner() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const updatePausedState = () => setIsPaused(reducedMotion.matches);
     const frameId = window.requestAnimationFrame(() => {
-      setSlides(getRandomSlides());
+      setSlides(getRandomSlides(vehicles));
       updatePausedState();
     });
 
@@ -73,7 +72,7 @@ export default function HomeHeroBanner() {
       window.cancelAnimationFrame(frameId);
       reducedMotion.removeEventListener("change", updatePausedState);
     };
-  }, []);
+  }, [vehicles]);
 
   useEffect(() => {
     if (isPaused || slides.length < 2) return;
@@ -102,7 +101,7 @@ export default function HomeHeroBanner() {
       aria-roledescription="băng chuyền"
     >
       <div className="scene-circle" />
-      <Image
+      <ContentImage
         key={activeSlide.image}
         alt={`Ảnh tham khảo ${activeSlide.vehicle.name}`}
         className="hero-real-photo"

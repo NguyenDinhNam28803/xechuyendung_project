@@ -1,16 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import ContentImage from "./content-image";
 import VehicleArtwork from "./vehicle-artwork";
 import {
-  getVehicleBySlug,
   vehicleCategories,
   vehicleCategoryBySlug,
   type VehicleCategory,
-  vehicles,
+  type Vehicle,
 } from "../data/vehicles";
 
 const maximumComparedVehicles = 3;
@@ -24,7 +23,7 @@ function normalize(value: string) {
     .toLocaleLowerCase("vi");
 }
 
-export default function VehicleCatalog() {
+export default function VehicleCatalog({ vehicles }: { vehicles: Vehicle[] }) {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get("loai");
   const category =
@@ -32,16 +31,22 @@ export default function VehicleCatalog() {
   const initialCategory: CatalogCategory =
     category === "Tất cả" || vehicleCategories.includes(category) ? category : "Tất cả";
 
-  return <VehicleCatalogContent key={searchParams.toString()} initialCategory={initialCategory} />;
+  return <VehicleCatalogContent key={searchParams.toString()} initialCategory={initialCategory} vehicles={vehicles} />;
 }
 
-function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCategory }) {
+function VehicleCatalogContent({
+  initialCategory,
+  vehicles,
+}: {
+  initialCategory: CatalogCategory;
+  vehicles: Vehicle[];
+}) {
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [search, setSearch] = useState("");
   const [comparedSlugs, setComparedSlugs] = useState<string[]>([]);
   const comparisonDialog = useRef<HTMLDialogElement>(null);
   const comparedVehicles = comparedSlugs
-    .map((slug) => getVehicleBySlug(slug))
+    .map((slug) => vehicles.find((vehicle) => vehicle.slug === slug))
     .filter((vehicle) => vehicle !== undefined);
 
   const filteredVehicles = useMemo(() => {
@@ -64,7 +69,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCa
         ).includes(query);
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, search]);
+  }, [activeCategory, search, vehicles]);
 
   function toggleComparedVehicle(slug: string) {
     setComparedSlugs((current) => {
@@ -118,7 +123,7 @@ function VehicleCatalogContent({ initialCategory }: { initialCategory: CatalogCa
               <Link className={`card-image card-image-${vehicle.artwork}`} href={`/xe/${vehicle.slug}`} aria-label={`Xem ${vehicle.name}`}>
                 <span className="vehicle-badge"><i />{vehicle.badge}</span>
                 {vehicle.images[0] ? (
-                  <Image
+                  <ContentImage
                     alt={vehicle.name}
                     className="card-photo"
                     fill

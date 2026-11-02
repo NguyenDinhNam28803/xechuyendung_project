@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import type { VehicleArtworkKind } from "../data/vehicles";
+import ContentImage from "./content-image";
 import VehicleArtwork from "./vehicle-artwork";
 
 type VehicleGalleryProps = {
@@ -26,7 +26,7 @@ export default function VehicleGallery({
       <div className={`detail-artwork card-image-${artwork}`}>
         <span className="vehicle-badge"><i />{badge}</span>
         {selectedImage ? (
-          <Image
+          <ContentImage
             alt={`Ảnh tham khảo ${name} - ảnh ${selectedIndex + 1}`}
             className="gallery-main-image"
             fill
@@ -52,7 +52,7 @@ export default function VehicleGallery({
               onClick={() => setSelectedIndex(index)}
               type="button"
             >
-              <Image alt="" fill sizes="100px" src={image} />
+              <ContentImage alt="" fill sizes="100px" src={image} />
             </button>
           ))}
         </div>

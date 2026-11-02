@@ -1,27 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import SiteFooter from "../../components/site-footer";
 import SiteHeader from "../../components/site-header";
-import { articles } from "../../data/articles";
+import { getPublicArticle } from "../../lib/content";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return articles.map((article) => ({ slug: article.slug }));
-}
-
 export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = articles.find((item) => item.slug === slug);
+  const article = await getPublicArticle(slug);
   return article
     ? { title: article.title, description: article.summary }
     : { title: "Không tìm thấy bài viết" };
 }
 
-export default async function ArticlePage({ params }: ArticlePageProps) {
+export default function ArticlePage({ params }: ArticlePageProps) {
+  return (
+    <Suspense fallback={<main className="content-page">Đang tải bài viết...</main>}>
+      <ArticleContent params={params} />
+    </Suspense>
+  );
+}
+
+async function ArticleContent({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = articles.find((item) => item.slug === slug);
+  const article = await getPublicArticle(slug);
   if (!article) notFound();
 
   return (

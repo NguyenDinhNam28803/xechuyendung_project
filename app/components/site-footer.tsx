@@ -14,14 +14,27 @@ export default function SiteFooter() {
       <div className="footer-main">
         <div className="footer-about">
           <Link className="brand" href="/">
-            <span className="brand-mark"><span /></span>
-            <span className="brand-name">XE CHUYÊN DỤNG<span>.VN</span><small>GIẢI PHÁP VẬN TẢI</small></span>
+            <span className="brand-mark">
+              <span />
+            </span>
+            <span className="brand-name">
+              XE CHUYÊN DỤNG<span>.VN</span>
+              <small>GIẢI PHÁP VẬN TẢI</small>
+            </span>
           </Link>
-          <p>Thông tin dòng xe và nội dung trên website đang được hoàn thiện. Vui lòng xác nhận cấu hình và báo giá với đơn vị tư vấn trước khi quyết định.</p>
+          <p>
+            Thông tin dòng xe và nội dung trên website đang được hoàn thiện. Vui
+            lòng xác nhận cấu hình và báo giá với đơn vị tư vấn trước khi quyết
+            định.
+          </p>
         </div>
         <div className="footer-column">
           <h2>Danh mục xe</h2>
-          {vehicleLinks.map((link) => <Link href={link.href} key={link.href}>{link.label}</Link>)}
+          {vehicleLinks.map((link) => (
+            <Link href={link.href} key={link.href}>
+              {link.label}
+            </Link>
+          ))}
         </div>
         <div className="footer-column">
           <h2>Thông tin</h2>
@@ -30,16 +43,21 @@ export default function SiteFooter() {
           <Link href="/tu-van-mua-xe">Tư vấn mua xe</Link>
           <Link href="/tin-tuc">Kiến thức</Link>
           <Link href="/chinh-sach">Chính sách</Link>
+          <Link href="/phap-ly">Quy định và pháp lý</Link>
         </div>
         <div className="footer-contact">
           <h2>Liên hệ Phước Nguyễn</h2>
           <p>Gửi nhu cầu để được định hướng dòng xe và cấu hình cần tìm.</p>
           <ContactInfo compact />
-          <Link href="/lien-he#contact-form">Mở biểu mẫu liên hệ <span aria-hidden="true">→</span></Link>
+          <Link href="/lien-he#contact-form">
+            Mở biểu mẫu liên hệ <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </div>
       <div className="footer-bottom">
-        <span>© Xe Chuyên Dụng. Nội dung mẫu đang trong quá trình hoàn thiện.</span>
+        <span>
+          © Xe Chuyên Dụng. Nội dung mẫu đang trong quá trình hoàn thiện.
+        </span>
         <Link href="/lien-he">Liên hệ</Link>
       </div>
     </footer>

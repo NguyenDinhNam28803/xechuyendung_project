@@ -91,6 +91,117 @@
   gap: 12px;
 }
 
+.admin-subtitle {
+  margin: 8px 0 0;
+  color: #6f7e88;
+  font-size: 13px;
+}
+
+.admin-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0 4px;
+}
+
+.admin-overview article {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border: 1px solid #e3e8e8;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.admin-overview span,
+.admin-overview small {
+  color: #6f7e88;
+  font-size: 12px;
+}
+
+.admin-overview strong {
+  font-size: 25px;
+}
+
+.admin-tabs {
+  flex-wrap: wrap;
+}
+
+.admin-search {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.admin-form-note {
+  margin: -4px 0 18px;
+  color: #6f7e88;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.admin-activity {
+  padding: 22px;
+}
+
+.admin-activity .admin-list-heading {
+  align-items: flex-start;
+}
+
+.admin-activity .admin-list-heading p {
+  margin: 6px 0 0;
+  color: #6f7e88;
+  font-size: 13px;
+}
+
+.admin-activity-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.admin-activity-table th,
+.admin-activity-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #edf0f0;
+  vertical-align: top;
+}
+
+.admin-activity-table th {
+  color: #6f7e88;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-action-badge {
+  display: inline-block;
+  border-radius: 999px;
+  background: #eef4f7;
+  padding: 4px 8px;
+  color: #19354a;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-action-delete {
+  background: #fff0ef;
+  color: #9c322b;
+}
+
+.admin-action-create,
+.admin-action-import {
+  background: #f0faf4;
+  color: #245c3b;
+}
+
 .admin-topbar {
   padding-bottom: 24px;
   border-bottom: 1px solid #e3e8e8;
@@ -254,6 +365,10 @@
 }
 
 @media (max-width: 900px) {
+  .admin-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .admin-workspace {
     grid-template-columns: 1fr;
   }
@@ -284,6 +399,23 @@
 
   .admin-toolbar-actions button {
     flex: 1;
+  }
+
+  .admin-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-search {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .admin-tabs {
+    width: 100%;
+  }
+
+  .admin-tabs button {
+    flex: 1 1 auto;
   }
 
   .admin-form-grid {

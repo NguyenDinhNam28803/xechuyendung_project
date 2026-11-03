@@ -1,58 +1,91 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import SiteFooter from "../components/site-footer";
 import SiteHeader from "../components/site-header";
+import { getPublicLegalResources } from "../lib/content";
 
 export const metadata: Metadata = {
   title: "Thông tin chính sách",
-  description: "Thông tin về dữ liệu liên hệ và trạng thái cập nhật các chính sách bán hàng, giao nhận, bảo hành.",
+  description:
+    "Thông tin về dữ liệu liên hệ và trạng thái cập nhật các chính sách bán hàng, giao nhận, bảo hành.",
 };
 
-const pendingPolicies = [
-  ["Chính sách bán hàng và thanh toán", "Chờ doanh nghiệp xác nhận điều kiện áp dụng."],
-  ["Giao nhận và bàn giao xe", "Chờ xác nhận phạm vi giao xe, thời gian và chi phí."],
-  ["Bảo hành và hỗ trợ kỹ thuật", "Chờ xác nhận nhà cung cấp, thời hạn và điều kiện bảo hành."],
-];
-
 export default function PoliciesPage() {
+  return (
+    <Suspense
+      fallback={<main className="content-page">Đang tải chính sách...</main>}
+    >
+      <PoliciesPageContent />
+    </Suspense>
+  );
+}
+
+async function PoliciesPageContent() {
+  const policies = await getPublicLegalResources("policy");
   return (
     <>
       <SiteHeader />
       <main className="content-page">
-        <div className="breadcrumbs"><Link href="/">Trang chủ</Link><span>/</span><span>Chính sách</span></div>
+        <div className="breadcrumbs">
+          <Link href="/">Trang chủ</Link>
+          <span>/</span>
+          <span>Chính sách</span>
+        </div>
         <section className="page-intro">
           <span className="section-kicker">MINH BẠCH THÔNG TIN</span>
-          <h1>Các chính sách<br /><span>đang chờ xác nhận.</span></h1>
-          <p>Website chưa công bố điều khoản bán hàng hoặc cam kết dịch vụ. Chúng tôi không tự suy diễn các nội dung có thể ảnh hưởng đến quyết định mua xe.</p>
+          <h1>
+            Thông tin chính sách
+            <br />
+            <span>được cập nhật minh bạch.</span>
+          </h1>
+          <p>
+            Điều khoản giao dịch chỉ có hiệu lực khi được đơn vị có trách nhiệm
+            xác nhận trong báo giá hoặc hồ sơ chính thức.
+          </p>
         </section>
         <section className="policy-list">
-          <article>
-            <span>01</span>
-            <div>
-              <h2>Dữ liệu liên hệ và quyền riêng tư</h2>
-              <p>
-                Khi gửi biểu mẫu, họ tên, số điện thoại, dòng xe quan tâm, tỉnh / thành phố và nội dung
-                yêu cầu được chuyển tới Google Sheets do đơn vị quản lý, nhằm phản hồi yêu cầu tư vấn.
-                Không gửi thông tin nhạy cảm qua biểu mẫu.
-              </p>
-              <p>
-                Trước khi mở biểu mẫu công khai, đơn vị cần bổ sung tên pháp nhân chịu trách nhiệm,
-                thời hạn lưu trữ, cách yêu cầu truy cập / chỉnh sửa / xóa dữ liệu và đầu mối liên hệ.
-              </p>
-            </div>
-            <b>Cần hoàn thiện</b>
-          </article>
-          {pendingPolicies.map(([title, status], index) => (
-            <article key={title}>
-              <span>0{index + 2}</span>
-              <div><h2>{title}</h2><p>{status}</p></div>
-              <b>Chưa công bố</b>
+          {policies.map((policy, index) => (
+            <article key={policy.slug}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <h2>{policy.title}</h2>
+                <p>{policy.summary}</p>
+                <p>{policy.content}</p>
+                {policy.sourceUrl && (
+                  <a href={policy.sourceUrl} rel="noreferrer" target="_blank">
+                    Nguồn tham khảo ↗
+                  </a>
+                )}
+              </div>
+              <b>Thông tin tham khảo</b>
             </article>
           ))}
+          {policies.length === 0 && (
+            <article>
+              <span>01</span>
+              <div>
+                <h2>Chưa có chính sách được công bố</h2>
+                <p>
+                  Các điều khoản sẽ được cập nhật sau khi đơn vị có trách nhiệm
+                  xác nhận.
+                </p>
+              </div>
+              <b>Chưa công bố</b>
+            </article>
+          )}
         </section>
         <div className="page-cta">
-          <div><strong>Cần xác nhận nội dung giao dịch?</strong><span>Chỉ sử dụng báo giá và điều khoản chính thức do đơn vị bán hàng cung cấp.</span></div>
-          <Link className="button button-primary" href="/lien-he">Xem thông tin liên hệ <span aria-hidden="true">→</span></Link>
+          <div>
+            <strong>Cần xác nhận nội dung giao dịch?</strong>
+            <span>
+              Chỉ sử dụng báo giá và điều khoản chính thức do đơn vị bán hàng
+              cung cấp.
+            </span>
+          </div>
+          <Link className="button button-primary" href="/lien-he">
+            Xem thông tin liên hệ <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </main>
       <SiteFooter />

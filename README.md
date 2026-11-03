@@ -82,7 +82,7 @@ Khi deploy, dùng nền tảng hỗ trợ chạy ứng dụng Next.js trên Node
 
 ### Backend quản trị xe và tin tức
 
-Backend quản trị nằm trong `server/`, chạy riêng trên cổng `4000`; website Next.js chạy trên cổng `3000`. Dữ liệu xe và bài viết được lưu trong PostgreSQL, không phụ thuộc vào Google Sheets. Trang `/admin` dùng cookie phiên `HttpOnly` và proxy API phía Next.js nên JWT không được lưu trong trình duyệt.
+Backend quản trị nằm trong `server/`, chạy riêng trên cổng `4000`; website Next.js chạy trên cổng `3000`. Đổi cổng API bằng biến `PORT` phía server và cập nhật `CONTENT_API_URL` phía client để trỏ đến API tương ứng. Dữ liệu xe và bài viết được lưu trong PostgreSQL, không phụ thuộc vào Google Sheets. Trang `/admin` dùng cookie phiên `HttpOnly` và proxy API phía Next.js nên JWT không được lưu trong trình duyệt.
 
 #### Chạy local
 

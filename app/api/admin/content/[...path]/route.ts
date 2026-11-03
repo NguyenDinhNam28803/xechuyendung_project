@@ -104,12 +104,19 @@ function isAllowedPath(path: string[]) {
       "articles",
       "legal-resources",
       "activity",
+      "contact-submissions",
       "import-defaults",
     ].includes(path[0]);
   }
   return (
-    path.length === 2 &&
-    ["vehicles", "articles", "legal-resources"].includes(path[0]) &&
-    /^[a-zA-Z0-9_-]+$/.test(path[1])
+    (path.length === 2 &&
+      ((["vehicles", "articles", "legal-resources"].includes(path[0]) &&
+        /^[a-zA-Z0-9_-]+$/.test(path[1])) ||
+        (path[0] === "contact-submissions" &&
+          /^[0-9a-f-]{36}$/i.test(path[1])))) ||
+    (path.length === 3 &&
+      path[0] === "contact-submissions" &&
+      /^[0-9a-f-]{36}$/i.test(path[1]) &&
+      path[2] === "status")
   );
 }

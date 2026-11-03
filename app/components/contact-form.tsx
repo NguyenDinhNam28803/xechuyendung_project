@@ -10,7 +10,8 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const searchParams = useSearchParams();
-  const vehicle = getVehicleBySlug(searchParams.get("xe") ?? "");
+  const vehicleSlug = searchParams.get("xe") ?? "";
+  const vehicle = getVehicleBySlug(vehicleSlug);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,7 +34,7 @@ export default function ContactForm() {
           category: formData.get("category"),
           location: formData.get("location"),
           message: formData.get("message"),
-          vehicleSlug: vehicle?.slug ?? "",
+          vehicleSlug: vehicle?.slug ?? vehicleSlug,
           companyWebsite: formData.get("companyWebsite"),
           consent: formData.get("consent") === "on",
         }),
@@ -41,7 +42,9 @@ export default function ContactForm() {
       const result: { error?: string } = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.");
+        throw new Error(
+          result.error ?? "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.",
+        );
       }
 
       form.reset();
@@ -65,12 +68,18 @@ export default function ContactForm() {
           <span className="form-eyebrow">YÊU CẦU TƯ VẤN</span>
           <h2>Chia sẻ nhu cầu của bạn</h2>
         </div>
-        <span className="form-required"><i /> Trường bắt buộc</span>
+        <span className="form-required">
+          <i /> Trường bắt buộc
+        </span>
       </div>
 
       <div className="form-demo-notice">
         <span aria-hidden="true">i</span>
-        <p><strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Bạn cũng có thể liên hệ trực tiếp qua số điện thoại và email bên cạnh.</p>
+        <p>
+          <strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo
+          rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Bạn cũng có thể liên
+          hệ trực tiếp qua số điện thoại và email bên cạnh.
+        </p>
       </div>
 
       {vehicle && (
@@ -98,41 +107,88 @@ export default function ContactForm() {
           />
         </div>
         <div className="form-field">
-          <label htmlFor="contact-name">Họ và tên <span>*</span></label>
-          <input autoComplete="name" id="contact-name" maxLength={100} name="name" placeholder="Nhập họ và tên" required />
+          <label htmlFor="contact-name">
+            Họ và tên <span>*</span>
+          </label>
+          <input
+            autoComplete="name"
+            id="contact-name"
+            maxLength={100}
+            name="name"
+            placeholder="Nhập họ và tên"
+            required
+          />
         </div>
         <div className="form-field">
-          <label htmlFor="contact-phone">Số điện thoại <span>*</span></label>
-          <input autoComplete="tel" id="contact-phone" inputMode="tel" maxLength={20} name="phone" placeholder="Ví dụ: 0901 234 567" required type="tel" />
+          <label htmlFor="contact-phone">
+            Số điện thoại <span>*</span>
+          </label>
+          <input
+            autoComplete="tel"
+            id="contact-phone"
+            inputMode="tel"
+            maxLength={20}
+            name="phone"
+            placeholder="Ví dụ: 0901 234 567"
+            required
+            type="tel"
+          />
         </div>
         <div className="form-field">
-          <label htmlFor="contact-category">Dòng xe quan tâm <span>*</span></label>
-          <select defaultValue={vehicle?.category ?? ""} id="contact-category" name="category" required>
-            <option disabled value="">Chọn dòng xe</option>
-            {contactVehicleCategories.map((option) => <option key={option}>{option}</option>)}
+          <label htmlFor="contact-category">
+            Dòng xe quan tâm <span>*</span>
+          </label>
+          <select
+            defaultValue={vehicle?.category ?? ""}
+            id="contact-category"
+            name="category"
+            required
+          >
+            <option disabled value="">
+              Chọn dòng xe
+            </option>
+            {contactVehicleCategories.map((option) => (
+              <option key={option}>{option}</option>
+            ))}
           </select>
         </div>
         <div className="form-field">
           <label htmlFor="contact-location">Tỉnh / thành phố</label>
-          <input autoComplete="address-level1" id="contact-location" maxLength={80} name="location" placeholder="Địa điểm dự kiến nhận xe" />
+          <input
+            autoComplete="address-level1"
+            id="contact-location"
+            maxLength={80}
+            name="location"
+            placeholder="Địa điểm dự kiến nhận xe"
+          />
         </div>
         <div className="form-field form-field-full">
           <label htmlFor="contact-message">Nhu cầu của bạn</label>
-          <textarea id="contact-message" maxLength={1000} name="message" placeholder="Mô tả công việc, tải trọng hoặc cấu hình bạn đang tìm..." rows={4} />
+          <textarea
+            id="contact-message"
+            maxLength={1000}
+            name="message"
+            placeholder="Mô tả công việc, tải trọng hoặc cấu hình bạn đang tìm..."
+            rows={4}
+          />
         </div>
         <div className="form-consent">
           <input id="contact-consent" name="consent" required type="checkbox" />
           <label htmlFor="contact-consent">
-            Tôi đồng ý để đơn vị lưu thông tin trên Google Sheets và dùng thông tin này để phản hồi yêu cầu tư vấn.{" "}
-            Xem <Link href="/chinh-sach">thông tin quyền riêng tư</Link>.
+            Tôi đồng ý để đơn vị lưu thông tin liên hệ trong hệ thống và sử dụng
+            thông tin này để phản hồi yêu cầu tư vấn. Tôi đã xem{" "}
+            <Link href="/chinh-sach">thông tin quyền riêng tư</Link>.
           </label>
         </div>
         <div className="form-submit-row">
-          <p>
-            Không nhập thông tin nhạy cảm.
-          </p>
-          <button className="button button-primary" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"} <span aria-hidden="true">→</span>
+          <p>Không nhập thông tin nhạy cảm.</p>
+          <button
+            className="button button-primary"
+            disabled={isSubmitting}
+            type="submit"
+          >
+            {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}{" "}
+            <span aria-hidden="true">→</span>
           </button>
         </div>
         {feedback && (

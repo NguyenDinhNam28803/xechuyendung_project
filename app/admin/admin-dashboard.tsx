@@ -5,6 +5,7 @@ import type { Article } from "../data/articles";
 import type { Vehicle } from "../data/vehicles";
 import type {
   ActivityEntry,
+  ContactSubmission,
   LegalResource,
   LegalResourceType,
 } from "../data/legal-resources";
@@ -18,6 +19,7 @@ type ContentTab =
   | "policies"
   | "regulations"
   | "legal_guides"
+  | "contact_submissions"
   | "activity";
 
 type VehicleForm = {
@@ -53,6 +55,7 @@ type LegalResourceForm = {
   sourceUrl: string;
   isPublished: boolean;
 };
+type LegalResourceTab = "policies" | "regulations" | "legal_guides";
 
 const emptyVehicle: VehicleForm = {
   slug: "",
@@ -94,13 +97,11 @@ const tabLabels: Record<ContentTab, string> = {
   policies: "Chính sách",
   regulations: "Quy định",
   legal_guides: "Tìm hiểu pháp lý",
+  contact_submissions: "Yêu cầu liên hệ",
   activity: "Lịch sử hoạt động",
 };
 
-const resourceTypeByTab: Record<
-  Exclude<ContentTab, "vehicles" | "articles" | "activity">,
-  LegalResourceType
-> = {
+const resourceTypeByTab: Record<LegalResourceTab, LegalResourceType> = {
   policies: "policy",
   regulations: "regulation",
   legal_guides: "legal_guide",
@@ -113,6 +114,9 @@ export default function AdminDashboard() {
     [],
   );
   const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [contactSubmissions, setContactSubmissions] = useState<
+    ContactSubmission[]
+  >([]);
   const [tab, setTab] = useState<ContentTab>("vehicles");
   const [vehicleForm, setVehicleForm] = useState(emptyVehicle);
   const [articleForm, setArticleForm] = useState(emptyArticle);
@@ -145,17 +149,24 @@ export default function AdminDashboard() {
   }
 
   async function loadContent() {
-    const [nextVehicles, nextArticles, nextLegalResources, nextActivity] =
-      await Promise.all([
-        apiRequest<AdminVehicle[]>("/vehicles"),
-        apiRequest<AdminArticle[]>("/articles"),
-        apiRequest<AdminLegalResource[]>("/legal-resources"),
-        apiRequest<ActivityEntry[]>("/activity"),
-      ]);
+    const [
+      nextVehicles,
+      nextArticles,
+      nextLegalResources,
+      nextActivity,
+      nextContactSubmissions,
+    ] = await Promise.all([
+      apiRequest<AdminVehicle[]>("/vehicles"),
+      apiRequest<AdminArticle[]>("/articles"),
+      apiRequest<AdminLegalResource[]>("/legal-resources"),
+      apiRequest<ActivityEntry[]>("/activity"),
+      apiRequest<ContactSubmission[]>("/contact-submissions"),
+    ]);
     setVehicles(nextVehicles);
     setArticles(nextArticles);
     setLegalResources(nextLegalResources);
     setActivity(nextActivity);
+    setContactSubmissions(nextContactSubmissions);
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -379,6 +390,41 @@ export default function AdminDashboard() {
     }
   }
 
+  async function updateContactStatus(
+    submission: ContactSubmission,
+    status: ContactSubmission["status"],
+  ) {
+    try {
+      await apiRequest(`/contact-submissions/${submission.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadContent();
+      showMessage("Đã cập nhật trạng thái yêu cầu liên hệ.");
+    } catch (error) {
+      showMessage(errorMessage(error), true);
+    }
+  }
+
+  async function deleteContactSubmission(submission: ContactSubmission) {
+    if (
+      !window.confirm(
+        `Xóa yêu cầu liên hệ của ${submission.name}? Thông tin liên hệ sẽ bị xóa khỏi hệ thống.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await apiRequest(`/contact-submissions/${submission.id}`, {
+        method: "DELETE",
+      });
+      await loadContent();
+      showMessage("Đã xóa yêu cầu liên hệ.");
+    } catch (error) {
+      showMessage(errorMessage(error), true);
+    }
+  }
+
   if (checkingSession) {
     return (
       <main className="admin-shell">
@@ -441,9 +487,11 @@ export default function AdminDashboard() {
       ? vehicles.length
       : tab === "articles"
         ? articles.length
-        : tab === "activity"
-          ? activity.length
-          : visibleResources.length;
+        : tab === "contact_submissions"
+          ? contactSubmissions.length
+          : tab === "activity"
+            ? activity.length
+            : visibleResources.length;
   const filteredVehicles = vehicles.filter((vehicle) =>
     `${vehicle.name} ${vehicle.make} ${vehicle.category}`
       .toLowerCase()
@@ -456,6 +504,11 @@ export default function AdminDashboard() {
   );
   const filteredResources = visibleResources.filter((resource) =>
     `${resource.title} ${resource.slug} ${resource.summary}`
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+  const filteredContactSubmissions = contactSubmissions.filter((submission) =>
+    `${submission.name} ${submission.phone} ${submission.category} ${submission.location} ${submission.message}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
@@ -516,6 +569,7 @@ export default function AdminDashboard() {
               "policies",
               "regulations",
               "legal_guides",
+              "contact_submissions",
               "activity",
             ] as ContentTab[]
           ).map((item) => {
@@ -524,12 +578,14 @@ export default function AdminDashboard() {
                 ? vehicles.length
                 : item === "articles"
                   ? articles.length
-                  : item === "activity"
-                    ? activity.length
-                    : legalResources.filter(
-                        (resource) =>
-                          resource.resourceType === resourceTypeByTab[item],
-                      ).length;
+                  : item === "contact_submissions"
+                    ? contactSubmissions.length
+                    : item === "activity"
+                      ? activity.length
+                      : legalResources.filter(
+                          (resource) =>
+                            resource.resourceType === resourceTypeByTab[item],
+                        ).length;
             return (
               <button
                 aria-selected={tab === item}
@@ -554,7 +610,7 @@ export default function AdminDashboard() {
               Nhập nội dung mẫu
             </button>
           )}
-          {tab !== "activity" && (
+          {tab !== "activity" && tab !== "contact_submissions" && (
             <button
               className="admin-primary-button"
               onClick={startNew}
@@ -583,7 +639,93 @@ export default function AdminDashboard() {
           />
         </label>
       )}
-      {tab === "activity" ? (
+      {tab === "contact_submissions" ? (
+        <section className="admin-card admin-contacts">
+          <div className="admin-list-heading">
+            <div>
+              <h2>Yêu cầu tư vấn từ khách hàng</h2>
+              <p>
+                Chỉ dùng thông tin liên hệ để phản hồi yêu cầu. Lịch sử hoạt
+                động không lưu tên, số điện thoại hay nội dung liên hệ.
+              </p>
+            </div>
+            <span>{contactSubmissions.length} yêu cầu gần nhất</span>
+          </div>
+          <div className="admin-contact-list">
+            {filteredContactSubmissions.map((submission) => (
+              <article className="admin-contact-item" key={submission.id}>
+                <div className="admin-contact-main">
+                  <div className="admin-contact-heading">
+                    <strong>{submission.name}</strong>
+                    <span
+                      className={`admin-contact-status status-${submission.status}`}
+                    >
+                      {contactStatusLabel(submission.status)}
+                    </span>
+                  </div>
+                  <div className="admin-contact-meta">
+                    <a href={`tel:${submission.phone}`}>{submission.phone}</a>
+                    <span>{submission.category}</span>
+                    <span>{formatDate(submission.createdAt)}</span>
+                  </div>
+                  {(submission.location || submission.vehicleSlug) && (
+                    <p>
+                      {submission.location && `Khu vực: ${submission.location}`}
+                      {submission.location && submission.vehicleSlug && " · "}
+                      {submission.vehicleSlug &&
+                        `Xe quan tâm: ${submission.vehicleSlug}`}
+                    </p>
+                  )}
+                  {submission.message && (
+                    <p className="admin-contact-message">
+                      {submission.message}
+                    </p>
+                  )}
+                  <details>
+                    <summary>Thông tin đồng ý và lưu trữ</summary>
+                    <p>{submission.consentText}</p>
+                    <small>Đồng ý lúc {formatDate(submission.consentAt)}</small>
+                  </details>
+                </div>
+                <div className="admin-contact-actions">
+                  <label className="admin-contact-status-control">
+                    Trạng thái
+                    <select
+                      onChange={(event) =>
+                        void updateContactStatus(
+                          submission,
+                          event.target.value as ContactSubmission["status"],
+                        )
+                      }
+                      value={submission.status}
+                    >
+                      <option value="new">Mới</option>
+                      <option value="in_progress">Đang xử lý</option>
+                      <option value="contacted">Đã liên hệ</option>
+                      <option value="closed">Hoàn tất</option>
+                      <option value="spam">Spam</option>
+                    </select>
+                  </label>
+                  <button
+                    className="admin-danger-button"
+                    onClick={() => void deleteContactSubmission(submission)}
+                    type="button"
+                  >
+                    Xóa dữ liệu
+                  </button>
+                </div>
+              </article>
+            ))}
+            {filteredContactSubmissions.length === 0 && (
+              <p className="admin-empty">
+                {contactSubmissions.length === 0
+                  ? "Chưa có yêu cầu liên hệ nào."
+                  : "Không có yêu cầu nào khớp với từ khóa tìm kiếm."}
+              </p>
+            )}
+          </div>
+        </section>
+      ) : tab === "activity" ? (
         <section className="admin-card admin-activity">
           <div className="admin-list-heading">
             <div>
@@ -1258,7 +1400,19 @@ function entityLabel(entity: ActivityEntry["entityType"]) {
     policy: "Chính sách",
     regulation: "Quy định",
     legal_guide: "Tìm hiểu pháp lý",
+    contact_submission: "Yêu cầu liên hệ",
     system: "Hệ thống",
   };
   return labels[entity];
+}
+
+function contactStatusLabel(status: ContactSubmission["status"]) {
+  const labels: Record<ContactSubmission["status"], string> = {
+    new: "Mới",
+    in_progress: "Đang xử lý",
+    contacted: "Đã liên hệ",
+    closed: "Hoàn tất",
+    spam: "Spam",
+  };
+  return labels[status];
 }

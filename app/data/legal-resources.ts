@@ -18,10 +18,31 @@ export type ActivityEntry = {
   actor: string;
   action: "CREATE" | "UPDATE" | "DELETE" | "IMPORT";
   entityType:
-    "vehicle" | "article" | "policy" | "regulation" | "legal_guide" | "system";
+    | "vehicle"
+    | "article"
+    | "policy"
+    | "regulation"
+    | "legal_guide"
+    | "contact_submission"
+    | "system";
   entityId: string | null;
   entityLabel: string;
   createdAt: string;
+};
+
+export type ContactSubmission = {
+  id: string;
+  name: string;
+  phone: string;
+  category: string;
+  location: string;
+  message: string;
+  vehicleSlug: string | null;
+  status: "new" | "in_progress" | "contacted" | "closed" | "spam";
+  consentText: string;
+  consentAt: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export const pendingPolicies: LegalResource[] = [
@@ -32,7 +53,7 @@ export const pendingPolicies: LegalResource[] = [
     summary:
       "Cần xác nhận thông tin đơn vị chịu trách nhiệm và thời hạn lưu dữ liệu.",
     content:
-      "Khi gửi biểu mẫu, thông tin liên hệ và nội dung yêu cầu được dùng để phản hồi tư vấn. Trước khi công bố chính sách chính thức, đơn vị cần xác nhận pháp nhân chịu trách nhiệm, thời hạn lưu trữ, cách yêu cầu truy cập/chỉnh sửa/xóa dữ liệu và đầu mối liên hệ.",
+      "Khi gửi biểu mẫu, thông tin liên hệ và nội dung yêu cầu được lưu trong hệ thống quản lý của website để phản hồi tư vấn. Trước khi công bố chính sách chính thức, đơn vị cần xác nhận pháp nhân chịu trách nhiệm, thời hạn lưu trữ, cách yêu cầu truy cập/chỉnh sửa/xóa dữ liệu và đầu mối liên hệ.",
     sourceUrl: null,
     isPublished: true,
   },

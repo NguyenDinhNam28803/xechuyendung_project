@@ -2,7 +2,7 @@
 
 Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm dòng xe theo công năng, xem thông tin tham khảo và chuẩn bị yêu cầu tư vấn.
 
-> Danh mục xe và bài viết hiện là dữ liệu tĩnh để minh họa. Form liên hệ gửi yêu cầu qua API Next.js tới Google Sheets khi đã cấu hình Apps Script và biến môi trường. Cần xác nhận thông tin doanh nghiệp, xe và nội dung quyền riêng tư trước khi mở form công khai.
+> Nội dung xe và bài viết được quản lý trong PostgreSQL; dự án vẫn có dữ liệu tĩnh để dự phòng khi API không kết nối. Form liên hệ gửi yêu cầu qua Next.js tới NestJS và lưu trong PostgreSQL. Cần xác nhận thông tin doanh nghiệp, xe và chính sách quyền riêng tư trước khi mở form công khai.
 
 ## Nội dung và chức năng
 
@@ -11,25 +11,25 @@ Website giới thiệu xe tải và xe chuyên dụng, giúp khách hàng tìm d
 - Danh mục xe hỗ trợ lọc theo loại, tìm kiếm không phân biệt dấu theo tên, thương hiệu, mô tả, công năng và thông tin cấu hình, đồng thời chọn tối đa ba xe để đối chiếu thông tin hiện có.
 - Một số trang xe có ảnh trong `app/assets/` và thông tin tham khảo với liên kết nguồn; các thông tin này vẫn cần được xác nhận theo phiên bản và hồ sơ thực tế.
 - Trang chi tiết cho từng xe trình bày thông tin đã biết, công năng, lưu ý và liên kết tư vấn theo xe đang xem.
-- Trang liên hệ gửi yêu cầu tư vấn tới Google Sheets qua API phía máy chủ; báo trạng thái gửi thành công hoặc lỗi.
+- Trang liên hệ kiểm tra dữ liệu và sự đồng ý, gửi yêu cầu tới API; admin có thể xem, cập nhật trạng thái và xóa yêu cầu trong dashboard.
 - Các trang nội dung gồm giới thiệu, dịch vụ, tư vấn mua xe, bài viết kiến thức và trạng thái chính sách.
 - Giao diện responsive; nội dung dữ liệu được render tĩnh khi phù hợp.
 - Kiểu chữ, tương phản và vùng thao tác được điều chỉnh để dễ đọc, dễ sử dụng trên nhiều kích thước màn hình.
 
 ### Các trang
 
-| Đường dẫn | Nội dung |
-| --- | --- |
-| `/` | Trang chủ |
-| `/xe` | Danh mục xe |
-| `/xe/[slug]` | Chi tiết xe |
-| `/lien-he` | Thông tin liên hệ Phước Nguyễn và form yêu cầu tư vấn; gửi dữ liệu khi API được cấu hình |
-| `/gioi-thieu` | Giới thiệu dự án |
-| `/dich-vu` | Các bước tư vấn tham khảo |
-| `/tu-van-mua-xe` | Checklist chuẩn bị khi tìm mua xe |
-| `/tin-tuc` | Danh sách bài viết kiến thức |
-| `/tin-tuc/[slug]` | Chi tiết bài viết |
-| `/chinh-sach` | Trạng thái các nội dung chính sách cần xác nhận |
+| Đường dẫn         | Nội dung                                                                                 |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| `/`               | Trang chủ                                                                                |
+| `/xe`             | Danh mục xe                                                                              |
+| `/xe/[slug]`      | Chi tiết xe                                                                              |
+| `/lien-he`        | Thông tin liên hệ Phước Nguyễn và form yêu cầu tư vấn; gửi dữ liệu khi API được cấu hình |
+| `/gioi-thieu`     | Giới thiệu dự án                                                                         |
+| `/dich-vu`        | Các bước tư vấn tham khảo                                                                |
+| `/tu-van-mua-xe`  | Checklist chuẩn bị khi tìm mua xe                                                        |
+| `/tin-tuc`        | Danh sách bài viết kiến thức                                                             |
+| `/tin-tuc/[slug]` | Chi tiết bài viết                                                                        |
+| `/chinh-sach`     | Trạng thái các nội dung chính sách cần xác nhận                                          |
 
 ## Dữ liệu và thông tin cần xác nhận
 
@@ -48,8 +48,8 @@ Thông tin xe tham khảo không phải thông tin doanh nghiệp của website 
 ## Công nghệ
 
 - [Next.js](https://nextjs.org) App Router
-- [NestJS](https://nestjs.com) REST API, class-validator và JWT
-- PostgreSQL và Prisma ORM
+- [NestJS](https://nestjs.com) REST API
+- PostgreSQL qua `pg` và migration SQL
 - React
 - TypeScript
 - Tailwind CSS và CSS tùy chỉnh
@@ -65,53 +65,49 @@ npm run dev
 
 Mở [http://localhost:3000](http://localhost:3000). Thay đổi trong thư mục `app/` sẽ được cập nhật tự động.
 
-### Kết nối form liên hệ với Google Sheets
+### Form liên hệ và quản lý yêu cầu
 
-Form dùng backend Node.js tích hợp trong Next.js tại `app/api/contact/route.ts`, endpoint `POST /api/contact`. Endpoint kiểm tra dữ liệu đầu vào và sự đồng ý trước khi chuyển tiếp yêu cầu tới Google Apps Script; không cần chạy thêm một dịch vụ NestJS/Express riêng. Các biến cấu hình chỉ được đọc phía máy chủ.
+Form gửi `POST /api/contact` tới Next.js; route này chuyển tiếp tới
+`POST /api/v1/contact-submissions` của NestJS. Server xác thực trường dữ liệu,
+kiểm tra checkbox đồng ý và lưu nội dung cùng phiên bản câu chữ đồng ý/thời
+điểm gửi vào PostgreSQL. Form không cần biến môi trường Google Apps Script.
 
-1. Tạo một Google Sheet dành riêng cho các yêu cầu tư vấn.
-2. Tạo một dự án tại [Google Apps Script](https://script.google.com/) và chép nội dung `google-apps-script/Code.gs` vào `Code.gs`.
-3. Trong **Project Settings → Script Properties**, thêm `SPREADSHEET_ID` (ID trong URL của Sheet) và `SHARED_SECRET` (một chuỗi ngẫu nhiên dài). Dùng cùng giá trị bí mật cho biến `GOOGLE_SHEETS_SHARED_SECRET` ở bước tiếp theo.
-4. Deploy Apps Script dưới dạng **Web app**, chọn chạy dưới tài khoản của bạn (**Execute as me**) và cho phép truy cập (**Who has access**) phù hợp để máy chủ website gọi được. Sao chép URL `/exec` của deployment.
-5. Từ thư mục `client`, sao chép `.env.example` thành `.env.local`, điền URL `/exec` vào `GOOGLE_APPS_SCRIPT_URL` và cùng bí mật vào `GOOGLE_SHEETS_SHARED_SECRET`. Không dùng tiền tố `NEXT_PUBLIC_` cho bí mật; `.env.local` không được commit.
-6. Khởi động lại Next.js. Gửi thử một yêu cầu và xác nhận dòng mới xuất hiện trong Sheet. API kiểm tra dữ liệu và chuyển tiếp ở phía máy chủ; mật khẩu dùng chung không được gửi xuống trình duyệt.
+Admin xem tối đa 200 yêu cầu gần nhất tại **/admin → Yêu cầu liên hệ**, tìm
+theo thông tin gửi, gọi số điện thoại, cập nhật trạng thái (mới, đang xử lý,
+đã liên hệ, hoàn tất, spam) hoặc xóa dữ liệu theo yêu cầu. Audit log ghi thao
+tác nhưng không ghi tên, số điện thoại hay nội dung tin nhắn.
 
-Apps Script sẽ ghi tiêu đề cột ở lần gửi đầu tiên và thêm thời gian nhận, thông tin liên hệ, nhu cầu cùng xe đang quan tâm. Giới hạn/quyền truy cập Sheet nên chỉ cấp cho người cần xử lý khách hàng. Google Apps Script có giới hạn sử dụng và không cung cấp chống spam/rate limit đầy đủ; nếu lượng yêu cầu tăng, cần bổ sung bảo vệ phù hợp hoặc chuyển sang CRM. Trước khi bật form cho khách thật, hoàn thiện thông tin còn thiếu trong trang `/chinh-sach`.
-
-Khi deploy, dùng nền tảng hỗ trợ chạy ứng dụng Next.js trên Node.js và khai báo hai biến môi trường trên trong cấu hình production. Không dùng static export vì endpoint API cần máy chủ xử lý request.
+Trước khi bật công khai, xác nhận pháp nhân kiểm soát dữ liệu, mục đích và
+thời hạn lưu trữ, đầu mối xử lý yêu cầu truy cập/xóa và chính sách bảo mật
+backup. Form có honeypot chống bot cơ bản; triển khai production nên cấu hình
+rate limit ở reverse proxy/WAF.
 
 ### Backend quản trị xe và tin tức
 
-Backend quản trị nằm trong `server/`, chạy riêng trên cổng `4000`; website Next.js chạy trên cổng `3000`. Đổi cổng API bằng biến `PORT` phía server và cập nhật `CONTENT_API_URL` phía client để trỏ đến API tương ứng. Dữ liệu xe và bài viết được lưu trong PostgreSQL, không phụ thuộc vào Google Sheets. Trang `/admin` dùng cookie phiên `HttpOnly` và proxy API phía Next.js nên JWT không được lưu trong trình duyệt.
+Backend quản trị nằm trong `server/`, chạy riêng trên cổng `4000`; website Next.js chạy trên cổng `3000`. Đổi cổng API bằng biến `PORT` phía server và cập nhật `CONTENT_API_URL` phía client để trỏ đến API tương ứng. Dữ liệu xe, bài viết và yêu cầu tư vấn được lưu trong PostgreSQL. Trang `/admin` dùng cookie phiên `HttpOnly` và proxy API phía Next.js.
 
 #### Chạy local
 
-1. Từ `client/server`, sao chép `.env.example` thành `.env`. Đổi `POSTGRES_PASSWORD`, đặt cùng mật khẩu trong `DATABASE_URL`, và thay `ADMIN_PASSWORD` (ít nhất 16 ký tự) cùng `JWT_SECRET` (ít nhất 32 ký tự) bằng giá trị ngẫu nhiên mạnh.
-2. Khởi động PostgreSQL (cần Docker Desktop đang chạy):
-
-   ```bash
-   docker compose up -d postgres
-   ```
-
-3. Cài và khởi tạo API:
+1. Cấu hình `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` và
+   `ADMIN_AUTH_SECRET` trong `server/.env`.
+2. Từ `server`, cài dependencies, áp dụng migration và chạy API:
 
    ```bash
    npm install
-   npm run prisma:generate
-   npm run db:migrate:dev
+   npm run db:migrate
    npm run start:dev
    ```
 
-4. Trong cửa sổ terminal khác, từ `client`, sao chép `.env.example` thành `.env.local`, rồi chạy:
+3. Trong cửa sổ terminal khác, từ `client`, chạy Next.js:
 
    ```bash
    npm install
    npm run dev
    ```
 
-5. Mở `http://localhost:3000/admin`, đăng nhập bằng `ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `server/.env`, rồi chọn **Nhập nội dung mẫu** để sao chép xe và bài viết hiện tại vào PostgreSQL. Hành động nhập chỉ thêm slug chưa tồn tại; nội dung đã chỉnh sửa không bị ghi đè.
+4. Mở `http://localhost:3000/admin` để quản lý nội dung và yêu cầu tư vấn.
 
-API công khai: `GET /api/v1/vehicles`, `GET /api/v1/vehicles/:slug`, `GET /api/v1/articles` và `GET /api/v1/articles/:slug`. CRUD quản trị nằm dưới `/api/v1/admin/vehicles` và `/api/v1/admin/articles`; đăng nhập tại `/api/v1/auth/login`. Các endpoint quản trị yêu cầu Bearer JWT. Xe/bài viết ở trạng thái bản nháp chỉ xuất hiện trong trang quản trị, không được trả về API công khai. Slug phải là chữ thường không dấu, số và dấu gạch nối; danh mục xe được giới hạn theo các nhóm có sẵn trên website.
+API công khai: `GET /api/v1/vehicles`, `GET /api/v1/vehicles/:slug`, `GET /api/v1/articles`, `GET /api/v1/articles/:slug` và `POST /api/v1/contact-submissions`. CRUD quản trị nằm dưới `/api/v1/admin/vehicles` và `/api/v1/admin/articles`; hộp thư liên hệ nằm dưới `/api/v1/admin/contact-submissions`; đăng nhập tại `/api/v1/auth/login`. Các endpoint quản trị yêu cầu xác thực admin. Xe/bài viết ở trạng thái bản nháp chỉ xuất hiện trong trang quản trị, không được trả về API công khai. Slug phải là chữ thường không dấu, số và dấu gạch nối; danh mục xe được giới hạn theo các nhóm có sẵn trên website.
 
 Next.js đọc `CONTENT_API_URL` từ `.env.local` phía máy chủ. Khi API chưa chạy, trang công khai ghi lỗi vào log và dùng nội dung mẫu tĩnh; khi API đã kết nối, dữ liệu PostgreSQL là nguồn hiển thị. Trên production, đặt biến môi trường trong `server/.env` theo mẫu, cấu hình `CONTENT_API_URL` để Next.js gọi được API, chạy `npm run db:migrate`, rồi chạy API bằng `npm run start:prod`. Không dùng static export.
 
@@ -133,7 +129,7 @@ app/
   components/          # Header, footer, form và thành phần danh mục dùng chung
   assets/              # Ảnh xe dùng trong danh mục và trang chi tiết
   data/                # Dữ liệu xe, ánh xạ ảnh và bài viết
-  api/contact/         # Backend nhận và chuyển tiếp yêu cầu tư vấn
+  api/contact/         # Chuyển yêu cầu tư vấn tới NestJS
   xe/                  # Danh mục xe và trang chi tiết [slug]
   lien-he/             # Trang liên hệ
   gioi-thieu/          # Trang giới thiệu
@@ -145,7 +141,6 @@ app/
   layout.tsx           # Layout gốc và metadata
   page.tsx             # Trang chủ
 public/                # Tài nguyên tĩnh
-google-apps-script/    # Endpoint ghi yêu cầu tư vấn vào Google Sheets
 ```
 
 ## Quy trình GitFlow

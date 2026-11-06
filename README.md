@@ -22,16 +22,21 @@ dữ liệu mẫu.
 
 ## Chức năng và trang
 
-| Đường dẫn                                   | Chức năng                                                            |
-| ------------------------------------------- | -------------------------------------------------------------------- |
-| `/`                                         | Trang chủ, giới thiệu và xe nổi bật                                  |
-| `/xe`, `/xe/[slug]`                         | Danh mục xe, lọc/tìm kiếm và chi tiết                                |
-| `/tin-tuc`, `/tin-tuc/[slug]`               | Bài viết kiến thức                                                   |
-| `/lien-he`                                  | Thông tin liên hệ và form tư vấn                                     |
-| `/chinh-sach`                               | Nội dung chính sách                                                  |
-| `/phap-ly`                                  | Tài liệu pháp lý tham khảo                                           |
-| `/dich-vu`, `/tu-van-mua-xe`, `/gioi-thieu` | Nội dung dịch vụ và hướng dẫn                                        |
-| `/admin`                                    | Quản lý xe, bài viết, tài liệu pháp lý, yêu cầu liên hệ và hoạt động |
+| Đường dẫn                                   | Chức năng                                                       |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `/`                                         | Trang chủ, giới thiệu và xe nổi bật                             |
+| `/xe`, `/xe/[slug]`                         | Danh mục xe, lọc/tìm kiếm và chi tiết                           |
+| `/tin-tuc`, `/tin-tuc/[slug]`               | Bài viết kiến thức                                              |
+| `/lien-he`                                  | Thông tin liên hệ và form tư vấn                                |
+| `/chinh-sach`                               | Nội dung chính sách                                             |
+| `/phap-ly`                                  | Tài liệu pháp lý tham khảo                                      |
+| `/dich-vu`, `/tu-van-mua-xe`, `/gioi-thieu` | Nội dung dịch vụ và hướng dẫn                                   |
+| `/admin`                                    | Tổng quan chỉ số, yêu cầu liên hệ gần đây và hoạt động quản trị |
+| `/admin/vehicles`, `/admin/articles`        | CRUD danh mục xe và bài viết                                    |
+| `/admin/policies`, `/admin/regulations`     | CRUD chính sách và quy định                                     |
+| `/admin/legal-guides`                       | CRUD hướng dẫn tìm hiểu pháp lý                                 |
+| `/admin/contact-submissions`                | Hộp thư yêu cầu tư vấn, trạng thái và xóa dữ liệu               |
+| `/admin/activity`                           | Lịch sử thao tác quản trị chỉ đọc                               |
 
 Danh mục mẫu tĩnh nằm trong `app/data/`. Ảnh nằm trong `app/assets/` và ánh xạ
 tại `app/data/vehicle-images.ts`. Nội dung lấy từ API là nguồn dữ liệu khi API
@@ -44,11 +49,11 @@ honeypot và chuyển tiếp đến `POST /api/v1/contact-submissions`. NestJS k
 các trường, lưu thông tin yêu cầu cùng nội dung/thời điểm đồng ý vào PostgreSQL.
 Form không sử dụng Google Sheets.
 
-Admin xem tối đa 200 yêu cầu gần nhất, tìm kiếm, gọi điện, cập nhật trạng thái
+Admin tìm kiếm và phân trang yêu cầu gần nhất, gọi điện, cập nhật trạng thái
 (`new`, `in_progress`, `contacted`, `closed`, `spam`) hoặc xóa yêu cầu. Audit
 log ghi nhận cập nhật/xóa nhưng không chứa tên, số điện thoại hay nội dung tin
-nhắn. Chống spam hiện mới ở mức honeypot; cần rate limit phía hạ tầng trước khi
-mở form rộng rãi.
+nhắn. Form có honeypot và API giới hạn tốc độ; vẫn nên cấu hình rate limit/WAF
+ở reverse proxy khi triển khai nhiều instance.
 
 ### Trang quản trị
 
@@ -59,6 +64,16 @@ API proxy giới hạn các đường dẫn quản trị được phép chuyển
 
 Nút **Nhập nội dung mẫu** chỉ thêm xe/bài viết có slug chưa tồn tại và không ghi
 đè nội dung hiện có. Dữ liệu nhập qua proxy được đánh dấu công khai.
+
+Giao diện quản trị dùng sidebar chung và các URL riêng cho từng phân hệ; có thể
+mở trực tiếp hoặc tải lại từng trang mà vẫn giữ đúng mục đang quản lý. Danh
+sách có tìm kiếm và phân trang phía server; trang tổng quan cung cấp số lượng
+bản ghi cùng danh sách yêu cầu liên hệ và hoạt động gần đây.
+Các trang xe, bài viết và pháp lý mở đầu bằng danh sách; dùng **Xem chi tiết**
+để kiểm tra đầy đủ nội dung, hoặc chọn **Tạo mới**/**Sửa** khi cần mở biểu mẫu.
+Danh sách nội dung, yêu cầu liên hệ và lịch sử hoạt động trình bày dạng bảng có
+cột dữ liệu riêng; thao tác xem/sửa/xóa và đổi trạng thái nằm trong cột
+**Hành động** phù hợp với từng loại dữ liệu.
 
 ## Chạy local
 

@@ -40,7 +40,16 @@ async function proxy(request: Request, context: RouteContext) {
     );
   }
 
-  const url = `${apiBaseUrl}/admin/${path.map(encodeURIComponent).join("/")}`;
+  const requestUrl = new URL(request.url);
+  const query = new URLSearchParams();
+  if (request.method === "GET") {
+    for (const key of ["page", "limit", "q", "type"]) {
+      const value = requestUrl.searchParams.get(key);
+      if (value !== null) query.set(key, value);
+    }
+  }
+  const queryString = query.size > 0 ? `?${query.toString()}` : "";
+  const url = `${apiBaseUrl}/admin/${path.map(encodeURIComponent).join("/")}${queryString}`;
   const headers = new Headers({ Authorization: `Bearer ${token}` });
   let body: string | undefined;
 
@@ -112,6 +121,7 @@ function isAllowedPath(path: string[]) {
     (path.length === 2 &&
       ((["vehicles", "articles", "legal-resources"].includes(path[0]) &&
         /^[a-zA-Z0-9_-]+$/.test(path[1])) ||
+        (path[0] === "contact-submissions" && path[1] === "search") ||
         (path[0] === "contact-submissions" &&
           /^[0-9a-f-]{36}$/i.test(path[1])))) ||
     (path.length === 3 &&

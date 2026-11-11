@@ -6,7 +6,7 @@ trong repository
 [`xechuyendung_project_server`](https://github.com/NguyenDinhNam28803/xechuyendung_project_server).
 
 Sơ đồ hệ thống, người dùng, luồng dữ liệu và quy trình nghiệp vụ:
-[`docs/architecture.md`](./docs/architecture.md).
+[`docs/architecture.md`](https://github.com/NguyenDinhNam28803/xechuyendung_project_server/blob/main/docs/architecture.md) (trong repo server).
 
 ## Kiến trúc và luồng dữ liệu
 

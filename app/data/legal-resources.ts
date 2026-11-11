@@ -13,38 +13,6 @@ export type LegalResource = {
   updatedAt?: string;
 };
 
-export type ActivityEntry = {
-  id: string;
-  actor: string;
-  action: "CREATE" | "UPDATE" | "DELETE" | "IMPORT";
-  entityType:
-    | "vehicle"
-    | "article"
-    | "policy"
-    | "regulation"
-    | "legal_guide"
-    | "contact_submission"
-    | "system";
-  entityId: string | null;
-  entityLabel: string;
-  createdAt: string;
-};
-
-export type ContactSubmission = {
-  id: string;
-  name: string;
-  phone: string;
-  category: string;
-  location: string;
-  message: string;
-  vehicleSlug: string | null;
-  status: "new" | "in_progress" | "contacted" | "closed" | "spam";
-  consentText: string;
-  consentAt: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export const pendingPolicies: LegalResource[] = [
   {
     slug: "du-lieu-lien-he-va-quyen-rieng-tu",

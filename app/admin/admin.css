@@ -1529,3 +1529,12 @@
     padding: 14px;
   }
 }
+
+/* Nhóm điều hướng: không tạo hộp riêng để giữ nguyên lưới/flex của sidebar. */
+.admin-navigation-group {
+  display: contents;
+}
+
+.admin-account {
+  max-width: 720px;
+}

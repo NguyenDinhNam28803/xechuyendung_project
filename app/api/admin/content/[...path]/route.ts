@@ -1,10 +1,14 @@
 import { cookies } from "next/headers";
 import { articles } from "../../../../data/articles";
 import { vehicles } from "../../../../data/vehicles";
+import {
+  apiBaseUrl,
+  sessionCookie,
+  sessionCookieOptions,
+  unavailable,
+} from "../../../../lib/admin-backend";
+import { isAllowedPath } from "../../../../lib/admin-paths";
 
-const apiBaseUrl =
-  process.env.CONTENT_API_URL ?? "http://localhost:4000/api/v1";
-const sessionCookie = "xe_admin_session";
 type RouteContext = { params: Promise<{ path: string[] }> };
 
 export async function GET(request: Request, context: RouteContext) {
@@ -26,13 +30,11 @@ export async function DELETE(request: Request, context: RouteContext) {
 async function proxy(request: Request, context: RouteContext) {
   const { path } = await context.params;
   if (!isAllowedPath(path)) {
-    return Response.json(
-      { message: "Đường dẫn không hợp lệ." },
-      { status: 404 },
-    );
+    return Response.json({ message: "Đường dẫn không hợp lệ." }, { status: 404 });
   }
 
-  const token = (await cookies()).get(sessionCookie)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookie)?.value;
   if (!token) {
     return Response.json(
       { message: "Vui lòng đăng nhập quản trị." },
@@ -53,26 +55,17 @@ async function proxy(request: Request, context: RouteContext) {
   const headers = new Headers({ Authorization: `Bearer ${token}` });
   let body: string | undefined;
 
-  if (request.method !== "GET" && request.method !== "DELETE") {
+  if (request.method === "POST" || request.method === "PATCH") {
     headers.set("Content-Type", "application/json");
-    if (
-      path.length === 1 &&
-      path[0] === "import-defaults" &&
-      request.method === "POST"
-    ) {
-      body = JSON.stringify({
-        vehicles: vehicles.map((vehicle) => ({
-          ...vehicle,
-          isPublished: true,
-        })),
-        articles: articles.map((article) => ({
-          ...article,
-          isPublished: true,
-        })),
-      });
-    } else {
-      body = await request.text();
-    }
+    // Nội dung mẫu lấy từ dữ liệu tĩnh của website; server luôn lưu ở trạng
+    // thái nháp để người quản trị duyệt trước khi công khai.
+    body =
+      path.length === 1 && path[0] === "import-defaults"
+        ? JSON.stringify({
+            vehicles: vehicles.map(withDraftFlag),
+            articles: articles.map(withDraftFlag),
+          })
+        : await request.text();
   }
 
   let response: Response;
@@ -85,48 +78,21 @@ async function proxy(request: Request, context: RouteContext) {
       signal: AbortSignal.timeout(10_000),
     });
   } catch (error) {
-    console.error(
-      "Unable to reach the content API for an admin request.",
-      error,
-    );
-    return Response.json(
-      { message: "Máy chủ quản trị hiện chưa khả dụng." },
-      { status: 503 },
-    );
+    return unavailable("an admin request", error);
   }
 
-  const responseBody = await response.text();
-  return new Response(responseBody, {
+  if (response.status === 401) {
+    cookieStore.set(sessionCookie, "", sessionCookieOptions(0));
+  }
+  return new Response(await response.text(), {
     status: response.status,
     headers: {
-      "Content-Type":
-        response.headers.get("content-type") ?? "application/json",
+      "Content-Type": response.headers.get("content-type") ?? "application/json",
       "Cache-Control": "no-store",
     },
   });
 }
 
-function isAllowedPath(path: string[]) {
-  if (path.length === 1) {
-    return [
-      "vehicles",
-      "articles",
-      "legal-resources",
-      "activity",
-      "contact-submissions",
-      "import-defaults",
-    ].includes(path[0]);
-  }
-  return (
-    (path.length === 2 &&
-      ((["vehicles", "articles", "legal-resources"].includes(path[0]) &&
-        /^[a-zA-Z0-9_-]+$/.test(path[1])) ||
-        (path[0] === "contact-submissions" && path[1] === "search") ||
-        (path[0] === "contact-submissions" &&
-          /^[0-9a-f-]{36}$/i.test(path[1])))) ||
-    (path.length === 3 &&
-      path[0] === "contact-submissions" &&
-      /^[0-9a-f-]{36}$/i.test(path[1]) &&
-      path[2] === "status")
-  );
+function withDraftFlag<T extends object>(item: T) {
+  return { ...item, isPublished: false };
 }

@@ -23,12 +23,14 @@ Nâng trải nghiệm biên tập và xử lý yêu cầu liên hệ của trang
 ## Thiết kế
 
 ### Server (NestJS)
+
 - `queryPage` nhận `filters: { column, value }[]` (so sánh bằng; cột là hằng số, giá trị là tham số; `undefined` bị bỏ qua).
 - `GET /admin/{vehicles,articles,legal-resources}` nhận `published=true|false` (giá trị khác → 400).
 - `POST /admin/contact-submissions/search` nhận `status` tùy chọn (5 trạng thái hợp lệ).
 - OpenAPI, README, unit test cập nhật. Không thêm endpoint thống kê: đếm bằng `limit=1` và `pagination.total`.
 
 ### Client
+
 - `Drawer` (`<dialog>` modal, bên phải, toàn màn hình mobile) cho mọi form tạo/sửa.
 - `UiFeedbackProvider`: toast (popover manual để nằm trên dialog) + `confirm()`/`prompt()` dạng Promise.
 - `useEntityEditor`: mở/đóng drawer, dirty-check (hỏi khi đóng, `beforeunload`), POST/PATCH/DELETE, toast.
@@ -39,9 +41,11 @@ Nâng trải nghiệm biên tập và xử lý yêu cầu liên hệ của trang
 - Proxy `/api/admin/content/*` cho phép thêm tham số `published`.
 
 ### Chất lượng
+
 - Hàm thuần (`slug.ts`, `content-fields.ts`, `list-query.ts`) test bằng `node:test`.
 - Playwright E2E (`e2e/`) với API + PostgreSQL thật; job `e2e` trong CI checkout repo server.
 - `gen:api` chạy qua script Node để dùng được trên Windows.
 
 ## Ngoài phạm vi
+
 Upload ảnh, trình soạn thảo rich-text, biểu đồ thống kê.

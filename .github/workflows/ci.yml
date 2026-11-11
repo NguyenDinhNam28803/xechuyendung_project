@@ -36,8 +36,8 @@ jobs:
 
   e2e:
     name: Admin E2E (Playwright + NestJS + PostgreSQL)
-    # Cố định 24.04: `playwright install --with-deps` cần hệ điều hành được
-    # Playwright hỗ trợ; ubuntu-latest đã chuyển sang Ubuntu 26.
+    # Cố định 24.04 (image có sẵn Google Chrome, đã kiểm chứng với Playwright);
+    # ubuntu-latest đã chuyển sang Ubuntu 26.
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
@@ -97,8 +97,13 @@ jobs:
           exit 1
       - run: npm ci
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      # Dùng Google Chrome có sẵn trên runner thay vì tải Chromium của
+      # Playwright (bước `playwright install` lỗi khi tải trình duyệt).
+      - name: Check preinstalled Chrome
+        run: google-chrome --version
       - run: npm run test:e2e
+        env:
+          E2E_BROWSER_CHANNEL: chrome
       - name: API log
         if: failure()
         run: cat api.log

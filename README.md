@@ -191,7 +191,8 @@ request:
 
 - **verify**: lint, typecheck, unit test, build.
 - **e2e**: checkout repo server (`main`), PostgreSQL 16 mới, migrate, chạy API,
-  build Next.js rồi chạy Playwright (Chromium). Khi lỗi, báo cáo Playwright và
+  build Next.js rồi chạy Playwright bằng Google Chrome có sẵn trên runner
+  (`E2E_BROWSER_CHANNEL=chrome`). Khi lỗi, báo cáo Playwright và
   log API được đính kèm làm artifact.
 
 ### Kiểm thử E2E

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AdminDashboard from "./admin-dashboard";
+import type { ReactNode } from "react";
 import "./admin.css";
 
 export const metadata: Metadata = {
@@ -7,6 +7,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AdminPage() {
-  return <AdminDashboard />;
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return children;
 }

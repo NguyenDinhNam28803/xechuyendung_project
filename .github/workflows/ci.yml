@@ -36,7 +36,9 @@ jobs:
 
   e2e:
     name: Admin E2E (Playwright + NestJS + PostgreSQL)
-    runs-on: ubuntu-latest
+    # Cố định 24.04: `playwright install --with-deps` cần hệ điều hành được
+    # Playwright hỗ trợ; ubuntu-latest đã chuyển sang Ubuntu 26.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:
       postgres:

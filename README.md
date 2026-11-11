@@ -93,24 +93,49 @@ app/admin/
   (console)/layout.tsx       # Khung sidebar/topbar + kiểm tra phiên
   (console)/<phân hệ>/page.tsx
   _components/
-    admin-console.tsx        # Sidebar, topbar, menu theo vai trò
+    admin-console.tsx        # Sidebar (huy hiệu liên hệ mới), topbar, menu theo vai trò
     session-context.tsx      # Người dùng hiện tại, đăng xuất, xử lý phiên hết hạn
+    ui-feedback.tsx          # Toast + hộp xác nhận/nhập (thay window.confirm/prompt)
+    drawer.tsx               # Panel tạo/sửa trượt từ phải (<dialog> modal)
+    form-editors.tsx         # Slug tự sinh, bảng thông số, danh sách ảnh, mục bài viết
     ui.tsx, detail-dialog.tsx
     sections/*-section.tsx   # Một file cho mỗi phân hệ
   _lib/
     types.ts                 # Kiểu dữ liệu lấy từ OpenAPI của server
     admin-api.ts             # fetch qua route handler cùng origin
-    use-paged-list.ts        # Danh sách phân trang + tìm kiếm dùng chung
+    use-paged-list.ts        # Danh sách phân trang + tìm kiếm + bộ lọc, đồng bộ lên URL
+    use-entity-editor.ts     # Tạo/sửa/xóa dùng chung, cảnh báo thay đổi chưa lưu
+    contact-stats.ts         # Đếm yêu cầu liên hệ theo trạng thái
+    list-query.ts, slug.ts, content-fields.ts  # Hàm thuần (có unit test)
+admin.css, admin-components.css
 ```
+
+Hành vi chung của các phân hệ:
+
+- **Drawer tạo/sửa**: form mở trong panel bên phải, danh sách vẫn ở phía sau.
+  Đóng khi còn thay đổi chưa lưu sẽ hỏi xác nhận; tải lại/đóng tab thì trình
+  duyệt cảnh báo.
+- **Trạng thái trên URL**: trang, từ khóa và bộ lọc (`?published=false`,
+  `?status=new`, `?q=...&page=2`) được giữ khi tải lại hoặc chia sẻ link.
+  Riêng hộp thư liên hệ **không** đưa từ khóa lên URL (dữ liệu cá nhân).
+- **Bộ lọc**: xe/bài viết/pháp lý lọc theo Đang công khai/Bản nháp; liên hệ lọc
+  theo 5 trạng thái, có số đếm từng trạng thái.
+- **Nhập liệu có cấu trúc**: slug tự sinh từ tên khi tạo mới (bỏ dấu tiếng
+  Việt); thông số xe nhập dạng bảng; ảnh có xem trước và chỉ nhận `https://`
+  hoặc đường dẫn `/`; nội dung bài viết nhập theo từng mục.
+- **Hộp thư liên hệ**: drawer chi tiết với nút gọi, thông tin đồng ý, đổi trạng
+  thái bằng nút Lưu; sidebar hiển thị số yêu cầu "Mới".
 
 Kiểu dữ liệu API sinh từ `openapi.yaml` của server bằng
 [`openapi-typescript`](https://openapi-ts.dev) vào
 `app/lib/generated/api-schema.ts` (đã commit). Khi server đổi hợp đồng API:
 
 ```bash
-npm run gen:api   # mặc định đọc ../xechuyendung_project_server/openapi.yaml
+npm run gen:api   # tìm ../xechuyendung_project_server/openapi.yaml rồi ../server/openapi.yaml
 OPENAPI_SPEC=https://api.example.com/openapi.yaml npm run gen:api
 ```
+
+`gen:api` chạy qua `scripts/gen-api.mjs` nên dùng được trên cả Windows.
 
 ## Chạy local
 
@@ -158,12 +183,38 @@ npm test           # node:test cho các hàm bảo mật (redirect, whitelist, C
 npm run build      # Build production
 npm run start      # Chạy build production, cổng 3000
 npm run gen:api    # Sinh lại kiểu dữ liệu từ OpenAPI của server
+npm run test:e2e   # Playwright E2E trang quản trị (cần API + PostgreSQL, xem dưới)
 ```
 
-CI (`.github/workflows/ci.yml`) chạy lint, typecheck, test và build trên mỗi
-push vào `main` và mỗi pull request. Luồng quản trị đầy đủ (đăng nhập, RBAC,
-CRUD, form liên hệ, đổi mật khẩu, lịch sử) đã được kiểm thử bằng Playwright
-với API và PostgreSQL thật; bộ E2E đó chưa được đưa vào CI.
+CI (`.github/workflows/ci.yml`) có hai job trên mỗi push vào `main` và mỗi pull
+request:
+
+- **verify**: lint, typecheck, unit test, build.
+- **e2e**: checkout repo server (`main`), PostgreSQL 16 mới, migrate, chạy API,
+  build Next.js rồi chạy Playwright (Chromium). Khi lỗi, báo cáo Playwright và
+  log API được đính kèm làm artifact.
+
+### Kiểm thử E2E
+
+Bộ test trong `e2e/` tạo/sửa/xóa dữ liệu thật: **chỉ chạy với database dành
+riêng cho kiểm thử, không bao giờ với production**.
+
+1. Chạy API với database kiểm thử đã migrate và tài khoản admin khởi tạo, ví
+   dụ `ADMIN_USERNAME=e2e-admin`, `ADMIN_PASSWORD=e2e-admin-password-123`.
+2. Ở repo client:
+
+   ```bash
+   npm run build
+   CONTENT_API_URL=http://127.0.0.1:4000/api/v1 \
+   E2E_ADMIN_USERNAME=e2e-admin E2E_ADMIN_PASSWORD=e2e-admin-password-123 \
+   npm run test:e2e
+   ```
+
+Playwright tự chạy `next start` ở cổng 3100 (`E2E_PORT`). Đặt
+`E2E_BASE_URL` để dùng server có sẵn, hoặc `E2E_BROWSER_CHANNEL=msedge`/`chrome`
+để dùng trình duyệt đã cài thay cho Chromium tải về. Bộ test đăng nhập 2 lần
+mỗi lượt chạy; endpoint đăng nhập giới hạn 5 lần/IP/15 phút, nên chạy liên
+tiếp nhiều lượt có thể nhận lỗi "quá thường xuyên".
 
 ## Cấu trúc chính
 

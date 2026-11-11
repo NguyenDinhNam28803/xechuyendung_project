@@ -1,23 +1,33 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
-import { adminFetch, errorMessage, jsonBody } from "../../_lib/admin-api";
+import { useCallback, useState } from "react";
+import { adminFetch, errorMessage } from "../../_lib/admin-api";
+import { cleanImages, cleanSpecs, type SpecRow } from "../../_lib/content-fields";
 import { lines } from "../../_lib/format";
+import { autoSlug } from "../../_lib/slug";
 import type { AdminVehicle, PageResponse, VehicleInput } from "../../_lib/types";
-import { useFeedback, usePagedList } from "../../_lib/use-paged-list";
+import { useEntityEditor } from "../../_lib/use-entity-editor";
+import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { DetailDialog, DetailItem, SourceLink } from "../detail-dialog";
+import { Drawer } from "../drawer";
+import { ImageListEditor, SlugField, SpecsEditor } from "../form-editors";
 import {
   EmptyRow,
   Feedback,
   Field,
+  FilterTabs,
   FormActions,
+  FormError,
+  ListControls,
   Pagination,
   PublishStatus,
   PublishToggle,
+  publishFilterOptions,
   RowActions,
   SearchBox,
   Toolbar,
 } from "../ui";
+import { useUiFeedback } from "../ui-feedback";
 
 type VehicleForm = {
   slug: string;
@@ -26,32 +36,33 @@ type VehicleForm = {
   category: string;
   description: string;
   artwork: VehicleInput["artwork"];
-  images: string;
+  images: string[];
   badge: string;
   useCase: string;
   highlights: string;
-  knownDetails: string;
+  knownDetails: SpecRow[];
   sourceUrl: string;
   isPublished: boolean;
 };
 
-const emptyForm: VehicleForm = {
+const emptyForm = (): VehicleForm => ({
   slug: "",
   name: "",
   make: "",
   category: "Xe tải",
   description: "",
   artwork: "cargo",
-  images: "",
+  images: [],
   badge: "Dữ liệu mẫu",
   useCase: "",
   highlights: "",
-  knownDetails: "[]",
+  knownDetails: [{ label: "", value: "" }],
   sourceUrl: "",
   isPublished: false,
-};
+});
 
 const categories = ["Xe tải", "Xe chữa cháy", "Xe cứu hộ", "Xe bồn / xe môi trường"];
+const filterKeys = ["published"] as const;
 
 function toForm(vehicle: AdminVehicle): VehicleForm {
   return {
@@ -61,120 +72,85 @@ function toForm(vehicle: AdminVehicle): VehicleForm {
     category: vehicle.category,
     description: vehicle.description,
     artwork: vehicle.artwork,
-    images: vehicle.images.join("\n"),
+    images: [...vehicle.images],
     badge: vehicle.badge,
     useCase: vehicle.useCase,
     highlights: vehicle.highlights.join("\n"),
-    knownDetails: JSON.stringify(vehicle.knownDetails, null, 2),
+    knownDetails: vehicle.knownDetails.map((spec) => ({ ...spec })),
     sourceUrl: vehicle.sourceUrl ?? "",
     isPublished: vehicle.isPublished,
   };
 }
 
 function toPayload(form: VehicleForm): VehicleInput {
-  let knownDetails: VehicleInput["knownDetails"];
-  try {
-    knownDetails = JSON.parse(form.knownDetails) as VehicleInput["knownDetails"];
-  } catch {
-    throw new Error("Thông số phải là JSON hợp lệ, ví dụ [{\"label\":\"Tải trọng\",\"value\":\"5 tấn\"}].");
-  }
+  const images = cleanImages(form.images);
+  if (!images.ok) throw new Error(images.error);
+  const knownDetails = cleanSpecs(form.knownDetails);
+  if (!knownDetails.ok) throw new Error(knownDetails.error);
+  const highlights = lines(form.highlights);
+  if (highlights.length === 0) throw new Error("Cần ít nhất một điểm nổi bật.");
   return {
-    slug: form.slug,
+    slug: form.slug.trim(),
     name: form.name,
     make: form.make,
     category: form.category,
     description: form.description,
     artwork: form.artwork,
-    images: lines(form.images),
+    images: images.value,
     badge: form.badge,
     useCase: form.useCase,
-    highlights: lines(form.highlights),
-    knownDetails,
-    sourceUrl: form.sourceUrl || null,
+    highlights,
+    knownDetails: knownDetails.value,
+    sourceUrl: form.sourceUrl.trim() || null,
     isPublished: form.isPublished,
   };
 }
 
 export function VehiclesSection() {
+  const { toast, confirm } = useUiFeedback();
   const loader = useCallback(
-    (page: number, search: string) =>
+    (page: number, search: string, filters: Record<string, string>) =>
       adminFetch<PageResponse<AdminVehicle>>(
-        `/vehicles?${new URLSearchParams({ page: String(page), limit: "25", q: search })}`,
+        `/vehicles?${apiQuery({ page, limit: 25, q: search, published: filters.published })}`,
       ),
     [],
   );
-  const list = usePagedList(loader);
-  const feedback = useFeedback();
-  const [form, setForm] = useState<VehicleForm | null>(null);
-  const [editingId, setEditingId] = useState("");
+  const list = usePagedList(loader, { filterKeys });
+  const editor = useEntityEditor<AdminVehicle, VehicleForm>({
+    basePath: "/vehicles",
+    emptyForm,
+    toForm,
+    toPayload,
+    onSaved: list.reload,
+    savedMessage: "Đã lưu thông tin xe.",
+    deletedMessage: "Đã xóa xe.",
+  });
   const [detail, setDetail] = useState<AdminVehicle | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  function startCreate() {
-    setEditingId("");
-    setForm({ ...emptyForm });
-    feedback.show("");
-  }
-
-  function startEdit(vehicle: AdminVehicle) {
-    setDetail(null);
-    setEditingId(vehicle.id);
-    setForm(toForm(vehicle));
-    feedback.show("");
-  }
-
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form) return;
-    setSaving(true);
-    try {
-      await adminFetch(editingId ? `/vehicles/${editingId}` : "/vehicles", {
-        method: editingId ? "PATCH" : "POST",
-        body: jsonBody(toPayload(form)),
-      });
-      setForm(null);
-      await list.reload();
-      feedback.show("Đã lưu thông tin xe.");
-    } catch (error) {
-      feedback.show(errorMessage(error), true);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function remove(vehicle: AdminVehicle) {
-    if (!window.confirm(`Xóa "${vehicle.name}"? Thao tác này không thể hoàn tác.`)) return;
-    try {
-      await adminFetch(`/vehicles/${vehicle.id}`, { method: "DELETE" });
-      if (editingId === vehicle.id) setForm(null);
-      await list.reload();
-      feedback.show("Đã xóa xe.");
-    } catch (error) {
-      feedback.show(errorMessage(error), true);
-    }
-  }
+  const [importing, setImporting] = useState(false);
+  const form = editor.form;
 
   async function importDefaults() {
-    if (
-      !window.confirm(
-        "Chỉ thêm các xe và bài viết mẫu chưa có (theo slug). Nội dung được nhập ở trạng thái NHÁP để bạn duyệt trước khi công khai. Tiếp tục?",
-      )
-    )
-      return;
-    setSaving(true);
+    const accepted = await confirm({
+      title: "Nhập nội dung mẫu?",
+      message:
+        "Chỉ thêm các xe và bài viết mẫu chưa có (theo slug). Nội dung được nhập ở trạng thái NHÁP để bạn duyệt trước khi công khai.",
+      confirmLabel: "Nhập nội dung",
+    });
+    if (!accepted) return;
+    setImporting(true);
     try {
-      const result = await adminFetch<{
-        vehiclesImported: number;
-        articlesImported: number;
-      }>("/import-defaults", { method: "POST" });
+      const result = await adminFetch<{ vehiclesImported: number; articlesImported: number }>(
+        "/import-defaults",
+        { method: "POST" },
+      );
       await list.reload();
-      feedback.show(
-        `Đã nhập ${result.vehiclesImported} xe và ${result.articlesImported} bài viết mới ở trạng thái nháp. Nội dung trùng slug được giữ nguyên.`,
+      toast(
+        `Đã nhập ${result.vehiclesImported} xe và ${result.articlesImported} bài viết mới ở trạng thái nháp.`,
       );
     } catch (error) {
-      feedback.show(errorMessage(error), true);
+      toast(errorMessage(error), "error");
     } finally {
-      setSaving(false);
+      setImporting(false);
     }
   }
 
@@ -183,148 +159,201 @@ export function VehiclesSection() {
       <Toolbar total={list.pageInfo.total} caption="Xe trong hệ thống">
         <button
           className="admin-secondary-button"
-          disabled={saving}
+          disabled={importing}
           onClick={() => void importDefaults()}
           type="button"
         >
-          Nhập nội dung mẫu
+          {importing ? "Đang nhập..." : "Nhập nội dung mẫu"}
         </button>
-        <button className="admin-primary-button" onClick={startCreate} type="button">
+        <button className="admin-primary-button" onClick={editor.openCreate} type="button">
           + Tạo mới
         </button>
       </Toolbar>
-      <Feedback message={feedback.message} isError={feedback.isError} />
       <Feedback message={list.error} isError />
-      <SearchBox label="Tìm trong xe" value={list.search} onChange={list.setSearch} />
-      <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
-      <div className="admin-workspace">
-        {form && (
-          <section className="admin-card admin-editor">
-            <form onSubmit={save}>
-              <h2>{editingId ? "Chỉnh sửa xe" : "Thêm xe"}</h2>
-              <div className="admin-form-grid">
-                <Field form={form} name="slug" label="Slug" onChange={setForm} required maxLength={120} />
-                <Field form={form} name="name" label="Tên xe" onChange={setForm} required maxLength={200} />
-                <Field form={form} name="make" label="Hãng xe" onChange={setForm} required maxLength={120} />
-                <label>
-                  Danh mục
-                  <select
-                    onChange={(event) => setForm({ ...form, category: event.target.value })}
-                    value={form.category}
-                  >
-                    {categories.map((category) => (
-                      <option key={category}>{category}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Kiểu minh họa
-                  <select
-                    onChange={(event) =>
-                      setForm({ ...form, artwork: event.target.value as VehicleForm["artwork"] })
-                    }
-                    value={form.artwork}
-                  >
-                    <option value="cargo">Xe tải</option>
-                    <option value="fire">Xe chữa cháy</option>
-                    <option value="rescue">Xe cứu hộ</option>
-                  </select>
-                </label>
-                <Field form={form} name="badge" label="Nhãn" onChange={setForm} required maxLength={120} />
-                <Field form={form} name="description" label="Mô tả" onChange={setForm} multiline fullWidth required />
-                <Field
-                  form={form}
-                  name="images"
-                  label="Ảnh (mỗi dòng một URL HTTPS hoặc đường dẫn nội bộ)"
-                  onChange={setForm}
-                  multiline
-                  fullWidth
-                />
-                <Field form={form} name="useCase" label="Mục đích sử dụng" onChange={setForm} multiline rows={2} fullWidth required />
-                <Field
-                  form={form}
-                  name="highlights"
-                  label="Điểm nổi bật (mỗi dòng một ý)"
-                  onChange={setForm}
-                  multiline
-                  fullWidth
-                  required
-                />
-                <Field
-                  form={form}
-                  name="knownDetails"
-                  label={<>Thông số (JSON dạng [{`{"label":"Tên","value":"Giá trị"}`}])</>}
-                  onChange={setForm}
-                  multiline
-                  rows={6}
-                  fullWidth
-                  required
-                  className="admin-code-input"
-                />
-                <Field form={form} name="sourceUrl" label="URL nguồn tham khảo" onChange={setForm} fullWidth type="url" />
-              </div>
-              <PublishToggle
-                checked={form.isPublished}
-                onChange={(isPublished) => setForm({ ...form, isPublished })}
-              />
-              <FormActions saving={saving} saveLabel="Lưu xe" onCancel={() => setForm(null)} />
-            </form>
-          </section>
-        )}
-        <section className="admin-card admin-list">
-          <div className="admin-list-heading">
-            <h2>Xe</h2>
-            <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
-          </div>
-          <div className="admin-data-table-wrap">
-            <table className="admin-data-table">
-              <thead>
-                <tr>
-                  <th>Tên xe</th>
-                  <th>Hãng xe</th>
-                  <th>Danh mục</th>
-                  <th>Trạng thái</th>
-                  <th>Hành động</th>
+      <ListControls>
+        <SearchBox label="Tìm trong xe" value={list.search} onChange={list.setSearch} />
+        <FilterTabs
+          label="Lọc theo trạng thái"
+          onChange={(value) => list.setFilter("published", value)}
+          options={publishFilterOptions}
+          value={list.filters.published ?? ""}
+        />
+      </ListControls>
+      <section className="admin-card admin-list">
+        <div className="admin-list-heading">
+          <h2>Xe</h2>
+          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
+        </div>
+        <div className="admin-data-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Tên xe</th>
+                <th>Hãng xe</th>
+                <th>Danh mục</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.items.map((vehicle) => (
+                <tr key={vehicle.id}>
+                  <td>
+                    <strong>{vehicle.name}</strong>
+                    <small>{vehicle.slug}</small>
+                  </td>
+                  <td>{vehicle.make}</td>
+                  <td>{vehicle.category}</td>
+                  <td>
+                    <PublishStatus isPublished={vehicle.isPublished} />
+                  </td>
+                  <td>
+                    <RowActions
+                      onDetail={() => setDetail(vehicle)}
+                      onEdit={() => editor.openEdit(vehicle)}
+                      onDelete={() => void editor.remove(vehicle, vehicle.name)}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {list.items.map((vehicle) => (
-                  <tr key={vehicle.id}>
-                    <td>
-                      <strong>{vehicle.name}</strong>
-                      <small>{vehicle.slug}</small>
-                    </td>
-                    <td>{vehicle.make}</td>
-                    <td>{vehicle.category}</td>
-                    <td>
-                      <PublishStatus isPublished={vehicle.isPublished} />
-                    </td>
-                    <td>
-                      <RowActions
-                        onDetail={() => setDetail(vehicle)}
-                        onEdit={() => startEdit(vehicle)}
-                        onDelete={() => void remove(vehicle)}
-                      />
-                    </td>
-                  </tr>
+              ))}
+              {!list.loading && list.items.length === 0 && (
+                <EmptyRow colSpan={5}>
+                  Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa/bộ lọc.
+                </EmptyRow>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
+
+      {form && (
+        <Drawer
+          eyebrow="DANH MỤC XE"
+          footer={
+            <FormActions
+              dirty={editor.dirty}
+              onCancel={() => void editor.requestClose()}
+              saveLabel="Lưu xe"
+              saving={editor.saving}
+            />
+          }
+          onRequestClose={() => void editor.requestClose()}
+          onSubmit={(event) => void editor.submit(event)}
+          title={editor.isEditing ? `Sửa: ${form.name || "xe"}` : "Thêm xe"}
+          wide
+        >
+          <FormError message={editor.error} />
+          <div className="admin-form-grid">
+            <label>
+              Tên xe
+              <input
+                maxLength={200}
+                onChange={(event) =>
+                  editor.setForm({
+                    ...form,
+                    name: event.target.value,
+                    slug: autoSlug(form.slug, form.name, event.target.value, !editor.isEditing),
+                  })
+                }
+                required
+                value={form.name}
+              />
+            </label>
+            <SlugField
+              hint={editor.isEditing ? "Đổi slug sẽ làm thay đổi đường dẫn công khai của xe." : undefined}
+              onChange={(slug) => editor.setForm({ ...form, slug })}
+              source={form.name}
+              value={form.slug}
+            />
+            <Field form={form} name="make" label="Hãng xe" onChange={editor.setForm} required maxLength={120} />
+            <label>
+              Danh mục
+              <select
+                onChange={(event) => editor.setForm({ ...form, category: event.target.value })}
+                value={form.category}
+              >
+                {[...new Set([...categories, form.category])].map((category) => (
+                  <option key={category}>{category}</option>
                 ))}
-                {!list.loading && list.items.length === 0 && (
-                  <EmptyRow colSpan={5}>
-                    Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa tìm kiếm.
-                  </EmptyRow>
-                )}
-              </tbody>
-            </table>
+              </select>
+            </label>
+            <label>
+              Kiểu minh họa
+              <select
+                onChange={(event) =>
+                  editor.setForm({ ...form, artwork: event.target.value as VehicleForm["artwork"] })
+                }
+                value={form.artwork}
+              >
+                <option value="cargo">Xe tải</option>
+                <option value="fire">Xe chữa cháy</option>
+                <option value="rescue">Xe cứu hộ</option>
+              </select>
+            </label>
+            <Field form={form} name="badge" label="Nhãn" onChange={editor.setForm} required maxLength={120} />
+            <Field
+              form={form}
+              name="description"
+              label="Mô tả"
+              onChange={editor.setForm}
+              multiline
+              fullWidth
+              required
+              maxLength={5000}
+            />
+            <Field
+              form={form}
+              name="useCase"
+              label="Mục đích sử dụng"
+              onChange={editor.setForm}
+              multiline
+              rows={2}
+              fullWidth
+              required
+              maxLength={1000}
+            />
+            <Field
+              form={form}
+              name="highlights"
+              label="Điểm nổi bật (mỗi dòng một ý)"
+              onChange={editor.setForm}
+              multiline
+              fullWidth
+              required
+            />
+            <SpecsEditor
+              onChange={(knownDetails) => editor.setForm({ ...form, knownDetails })}
+              value={form.knownDetails}
+            />
+            <ImageListEditor onChange={(images) => editor.setForm({ ...form, images })} value={form.images} />
+            <Field
+              form={form}
+              name="sourceUrl"
+              label="URL nguồn tham khảo"
+              onChange={editor.setForm}
+              fullWidth
+              type="url"
+              placeholder="https://"
+            />
           </div>
-        </section>
-      </div>
+          <PublishToggle
+            checked={form.isPublished}
+            onChange={(isPublished) => editor.setForm({ ...form, isPublished })}
+          />
+        </Drawer>
+      )}
+
       {detail && (
         <DetailDialog
           title={detail.name}
           slug={detail.slug}
           isPublished={detail.isPublished}
           onClose={() => setDetail(null)}
-          onEdit={() => startEdit(detail)}
+          onEdit={() => {
+            setDetail(null);
+            editor.openEdit(detail);
+          }}
         >
           <DetailItem label="Hãng xe">{detail.make}</DetailItem>
           <DetailItem label="Danh mục">{detail.category}</DetailItem>

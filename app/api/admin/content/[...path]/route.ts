@@ -45,7 +45,7 @@ async function proxy(request: Request, context: RouteContext) {
   const requestUrl = new URL(request.url);
   const query = new URLSearchParams();
   if (request.method === "GET") {
-    for (const key of ["page", "limit", "q", "type"]) {
+    for (const key of ["page", "limit", "q", "type", "published"]) {
       const value = requestUrl.searchParams.get(key);
       if (value !== null) query.set(key, value);
     }

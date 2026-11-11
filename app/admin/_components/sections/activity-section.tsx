@@ -4,14 +4,14 @@ import { useCallback } from "react";
 import { adminFetch } from "../../_lib/admin-api";
 import { actionLabels, entityLabels, formatDate } from "../../_lib/format";
 import type { ActivityEntry, PageResponse } from "../../_lib/types";
-import { usePagedList } from "../../_lib/use-paged-list";
+import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { Feedback, Pagination, SearchBox, Toolbar } from "../ui";
 
 export function ActivitySection() {
   const loader = useCallback(
     (page: number, search: string) =>
       adminFetch<PageResponse<ActivityEntry>>(
-        `/activity?${new URLSearchParams({ page: String(page), limit: "50", q: search })}`,
+        `/activity?${apiQuery({ page, limit: 50, q: search })}`,
       ),
     [],
   );

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { contactsChangedEvent, countNewContacts } from "../_lib/contact-stats";
 import { roleLabels } from "../_lib/format";
 import { AdminSessionProvider, useAdminSession } from "./session-context";
+import { UiFeedbackProvider } from "./ui-feedback";
 
 type NavItem = {
   href: string;
@@ -106,9 +108,43 @@ export function AdminConsole({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Số yêu cầu liên hệ ở trạng thái "Mới" cho huy hiệu sidebar. Tải lại khi đổi
+ * trang, khi tab được focus lại và khi một phân hệ báo dữ liệu liên hệ đổi.
+ */
+function useNewContactCount() {
+  const pathname = usePathname();
+  const [count, setCount] = useState<number | null>(null);
+
+  const refresh = useCallback(() => {
+    countNewContacts()
+      .then(setCount)
+      .catch(() => setCount(null));
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [pathname, refresh]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener(contactsChangedEvent, refresh);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener(contactsChangedEvent, refresh);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refresh]);
+
+  return count;
+}
+
 function ConsoleLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { user, isAdmin, logout } = useAdminSession();
+  const newContacts = useNewContactCount();
   const allItems = navigation.flatMap((group) => group.items);
   const current =
     allItems.find((item) => item.href === pathname) ?? allItems[0];
@@ -116,6 +152,7 @@ function ConsoleLayout({ children }: { children: ReactNode }) {
 
   return (
     <main className="admin-shell">
+      <UiFeedbackProvider>
       <aside className="admin-sidebar">
         <Link className="admin-brand" href="/admin">
           <span className="admin-brand-mark">XD</span>
@@ -141,6 +178,14 @@ function ConsoleLayout({ children }: { children: ReactNode }) {
                     >
                       <span className="admin-nav-icon">{item.icon}</span>
                       {item.label}
+                      {item.href === "/admin/contact-submissions" && newContacts ? (
+                        <small
+                          aria-label={`${newContacts} yêu cầu mới`}
+                          className="admin-nav-badge"
+                        >
+                          {newContacts > 99 ? "99+" : newContacts}
+                        </small>
+                      ) : null}
                     </Link>
                   );
                 })}
@@ -181,6 +226,7 @@ function ConsoleLayout({ children }: { children: ReactNode }) {
         </header>
         <div className="admin-content">{children}</div>
       </div>
+      </UiFeedbackProvider>
     </main>
   );
 }

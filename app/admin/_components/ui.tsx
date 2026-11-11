@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { pageWindow } from "../_lib/list-query";
 import type { PageInfo } from "../_lib/types";
 
 export function Feedback({
@@ -79,21 +80,92 @@ export function Pagination({
       </span>
       <div>
         <button
+          aria-label="Trang trước"
           disabled={pageInfo.page <= 1}
           onClick={() => onPageChange(pageInfo.page - 1)}
           type="button"
         >
-          Trước
+          ‹
         </button>
+        {pageWindow(pageInfo.page, pageInfo.totalPages).map((page, index) =>
+          page === "…" ? (
+            <span className="admin-pagination-gap" key={`gap-${index}`}>
+              …
+            </span>
+          ) : (
+            <button
+              aria-current={page === pageInfo.page ? "page" : undefined}
+              aria-label={`Trang ${page}`}
+              className={page === pageInfo.page ? "is-current" : undefined}
+              key={page}
+              onClick={() => onPageChange(page)}
+              type="button"
+            >
+              {page}
+            </button>
+          ),
+        )}
         <button
+          aria-label="Trang sau"
           disabled={pageInfo.page >= pageInfo.totalPages}
           onClick={() => onPageChange(pageInfo.page + 1)}
           type="button"
         >
-          Tiếp
+          ›
         </button>
       </div>
     </nav>
+  );
+}
+
+export type FilterOption = { value: string; label: string; count?: number };
+
+/** Nhóm nút lọc một lựa chọn (ví dụ Tất cả / Công khai / Bản nháp). */
+export function FilterTabs({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: FilterOption[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div aria-label={label} className="admin-filter-tabs" role="group">
+      {options.map((option) => (
+        <button
+          aria-pressed={option.value === value}
+          key={option.value || "all"}
+          onClick={() => onChange(option.value)}
+          type="button"
+        >
+          {option.label}
+          {option.count !== undefined && <span className="admin-filter-count">{option.count}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export const publishFilterOptions: FilterOption[] = [
+  { value: "", label: "Tất cả" },
+  { value: "true", label: "Đang công khai" },
+  { value: "false", label: "Bản nháp" },
+];
+
+/** Hàng tìm kiếm + bộ lọc đặt cạnh nhau, xuống dòng trên màn hình hẹp. */
+export function ListControls({ children }: { children: ReactNode }) {
+  return <div className="admin-list-controls">{children}</div>;
+}
+
+export function FormError({ message }: { message: string }) {
+  if (!message) return null;
+  return (
+    <p className="admin-feedback admin-feedback-error" role="alert">
+      {message}
+    </p>
   );
 }
 
@@ -226,23 +298,27 @@ export function PublishToggle({
   );
 }
 
+/** Nút ở footer drawer: Hủy + Lưu (submit form của drawer). */
 export function FormActions({
   saving,
   saveLabel,
   onCancel,
+  dirty,
 }: {
   saving: boolean;
   saveLabel: string;
   onCancel: () => void;
+  dirty?: boolean;
 }) {
   return (
-    <div className="admin-form-actions">
-      <button className="admin-primary-button" disabled={saving} type="submit">
-        {saving ? "Đang lưu..." : saveLabel}
-      </button>
+    <>
+      {dirty && <span className="admin-unsaved-note">Có thay đổi chưa lưu</span>}
       <button className="admin-secondary-button" onClick={onCancel} type="button">
         Hủy
       </button>
-    </div>
+      <button className="admin-primary-button" disabled={saving} type="submit">
+        {saving ? "Đang lưu..." : saveLabel}
+      </button>
+    </>
   );
 }

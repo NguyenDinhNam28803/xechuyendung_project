@@ -655,6 +655,8 @@ export interface paths {
                     limit?: components["parameters"]["Limit"];
                     /** @description Case-insensitive substring; "%" and "_" are matched literally. */
                     q?: components["parameters"]["Search"];
+                    /** @description true = only published items, false = only drafts, omitted = all. */
+                    published?: components["parameters"]["Published"];
                 };
                 header?: never;
                 path?: never;
@@ -790,6 +792,8 @@ export interface paths {
                     limit?: components["parameters"]["Limit"];
                     /** @description Case-insensitive substring; "%" and "_" are matched literally. */
                     q?: components["parameters"]["Search"];
+                    /** @description true = only published items, false = only drafts, omitted = all. */
+                    published?: components["parameters"]["Published"];
                 };
                 header?: never;
                 path?: never;
@@ -971,6 +975,8 @@ export interface paths {
                     limit?: components["parameters"]["Limit"];
                     /** @description Case-insensitive substring; "%" and "_" are matched literally. */
                     q?: components["parameters"]["Search"];
+                    /** @description true = only published items, false = only drafts, omitted = all. */
+                    published?: components["parameters"]["Published"];
                     type?: "policy" | "regulation" | "legal_guide";
                 };
                 header?: never;
@@ -1445,6 +1451,11 @@ export interface components {
             /** @default 25 */
             limit: number;
             search?: string;
+            /**
+             * @description Only return submissions with this status.
+             * @enum {string}
+             */
+            status?: "new" | "in_progress" | "contacted" | "closed" | "spam";
         };
         ContactSubmissionInput: {
             name: string;
@@ -1609,6 +1620,8 @@ export interface components {
         PublicLimit: number;
         /** @description Case-insensitive substring; "%" and "_" are matched literally. */
         Search: string;
+        /** @description true = only published items, false = only drafts, omitted = all. */
+        Published: "true" | "false";
     };
     requestBodies: never;
     headers: never;

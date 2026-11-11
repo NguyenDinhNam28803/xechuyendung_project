@@ -1,18 +1,27 @@
 "use client";
 
-import { useCallback, useState, type FormEvent } from "react";
-import { adminFetch, errorMessage, jsonBody } from "../../_lib/admin-api";
+import { useCallback, useState } from "react";
+import { adminFetch } from "../../_lib/admin-api";
+import { cleanSections, joinParagraphs, type ArticleSectionRow } from "../../_lib/content-fields";
+import { autoSlug } from "../../_lib/slug";
 import type { AdminArticle, ArticleInput, PageResponse } from "../../_lib/types";
-import { useFeedback, usePagedList } from "../../_lib/use-paged-list";
+import { useEntityEditor } from "../../_lib/use-entity-editor";
+import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { DetailDialog, DetailItem } from "../detail-dialog";
+import { Drawer } from "../drawer";
+import { SectionsEditor, SlugField } from "../form-editors";
 import {
   EmptyRow,
   Feedback,
   Field,
+  FilterTabs,
   FormActions,
+  FormError,
+  ListControls,
   Pagination,
   PublishStatus,
   PublishToggle,
+  publishFilterOptions,
   RowActions,
   SearchBox,
   Toolbar,
@@ -23,192 +32,207 @@ type ArticleForm = {
   category: string;
   title: string;
   summary: string;
-  sections: string;
+  sections: ArticleSectionRow[];
   isPublished: boolean;
 };
 
-const emptyForm: ArticleForm = {
+const emptyForm = (): ArticleForm => ({
   slug: "",
   category: "",
   title: "",
   summary: "",
-  sections: '[\n  {\n    "heading": "",\n    "paragraphs": [""]\n  }\n]',
+  sections: [{ heading: "", paragraphs: "" }],
   isPublished: false,
-};
+});
+
+const filterKeys = ["published"] as const;
+
+function toForm(article: AdminArticle): ArticleForm {
+  return {
+    slug: article.slug,
+    category: article.category,
+    title: article.title,
+    summary: article.summary,
+    sections: article.sections.map((section) => ({
+      heading: section.heading,
+      paragraphs: joinParagraphs(section.paragraphs),
+    })),
+    isPublished: article.isPublished,
+  };
+}
 
 function toPayload(form: ArticleForm): ArticleInput {
-  let sections: ArticleInput["sections"];
-  try {
-    sections = JSON.parse(form.sections) as ArticleInput["sections"];
-  } catch {
-    throw new Error("Nội dung bài viết phải là JSON hợp lệ.");
-  }
-  return { ...form, sections };
+  const sections = cleanSections(form.sections);
+  if (!sections.ok) throw new Error(sections.error);
+  return {
+    slug: form.slug.trim(),
+    category: form.category,
+    title: form.title,
+    summary: form.summary,
+    sections: sections.value,
+    isPublished: form.isPublished,
+  };
 }
 
 export function ArticlesSection() {
   const loader = useCallback(
-    (page: number, search: string) =>
+    (page: number, search: string, filters: Record<string, string>) =>
       adminFetch<PageResponse<AdminArticle>>(
-        `/articles?${new URLSearchParams({ page: String(page), limit: "25", q: search })}`,
+        `/articles?${apiQuery({ page, limit: 25, q: search, published: filters.published })}`,
       ),
     [],
   );
-  const list = usePagedList(loader);
-  const feedback = useFeedback();
-  const [form, setForm] = useState<ArticleForm | null>(null);
-  const [editingId, setEditingId] = useState("");
+  const list = usePagedList(loader, { filterKeys });
+  const editor = useEntityEditor<AdminArticle, ArticleForm>({
+    basePath: "/articles",
+    emptyForm,
+    toForm,
+    toPayload,
+    onSaved: list.reload,
+    savedMessage: "Đã lưu bài viết.",
+    deletedMessage: "Đã xóa bài viết.",
+  });
   const [detail, setDetail] = useState<AdminArticle | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  function startEdit(article: AdminArticle) {
-    setDetail(null);
-    setEditingId(article.id);
-    setForm({
-      slug: article.slug,
-      category: article.category,
-      title: article.title,
-      summary: article.summary,
-      sections: JSON.stringify(article.sections, null, 2),
-      isPublished: article.isPublished,
-    });
-    feedback.show("");
-  }
-
-  async function save(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!form) return;
-    setSaving(true);
-    try {
-      await adminFetch(editingId ? `/articles/${editingId}` : "/articles", {
-        method: editingId ? "PATCH" : "POST",
-        body: jsonBody(toPayload(form)),
-      });
-      setForm(null);
-      await list.reload();
-      feedback.show("Đã lưu bài viết.");
-    } catch (error) {
-      feedback.show(errorMessage(error), true);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function remove(article: AdminArticle) {
-    if (!window.confirm(`Xóa "${article.title}"? Thao tác này không thể hoàn tác.`)) return;
-    try {
-      await adminFetch(`/articles/${article.id}`, { method: "DELETE" });
-      if (editingId === article.id) setForm(null);
-      await list.reload();
-      feedback.show("Đã xóa bài viết.");
-    } catch (error) {
-      feedback.show(errorMessage(error), true);
-    }
-  }
+  const form = editor.form;
 
   return (
     <>
       <Toolbar total={list.pageInfo.total} caption="Bài viết trong hệ thống">
-        <button
-          className="admin-primary-button"
-          onClick={() => {
-            setEditingId("");
-            setForm({ ...emptyForm });
-          }}
-          type="button"
-        >
+        <button className="admin-primary-button" onClick={editor.openCreate} type="button">
           + Tạo mới
         </button>
       </Toolbar>
-      <Feedback message={feedback.message} isError={feedback.isError} />
       <Feedback message={list.error} isError />
-      <SearchBox label="Tìm trong bài viết" value={list.search} onChange={list.setSearch} />
-      <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
-      <div className="admin-workspace">
-        {form && (
-          <section className="admin-card admin-editor">
-            <form onSubmit={save}>
-              <h2>{editingId ? "Chỉnh sửa bài viết" : "Thêm bài viết"}</h2>
-              <div className="admin-form-grid">
-                <Field form={form} name="slug" label="Slug" onChange={setForm} required maxLength={120} />
-                <Field form={form} name="category" label="Chuyên mục" onChange={setForm} required maxLength={100} />
-                <Field form={form} name="title" label="Tiêu đề" onChange={setForm} required fullWidth maxLength={250} />
-                <Field form={form} name="summary" label="Mô tả ngắn" onChange={setForm} required multiline fullWidth maxLength={2000} />
-                <Field
-                  form={form}
-                  name="sections"
-                  label="Nội dung (JSON: mảng các mục heading và paragraphs)"
-                  onChange={setForm}
-                  required
-                  multiline
-                  rows={12}
-                  fullWidth
-                  className="admin-code-input"
-                />
-              </div>
-              <PublishToggle
-                checked={form.isPublished}
-                onChange={(isPublished) => setForm({ ...form, isPublished })}
-              />
-              <FormActions saving={saving} saveLabel="Lưu bài viết" onCancel={() => setForm(null)} />
-            </form>
-          </section>
-        )}
-        <section className="admin-card admin-list">
-          <div className="admin-list-heading">
-            <h2>Bài viết</h2>
-            <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
-          </div>
-          <div className="admin-data-table-wrap">
-            <table className="admin-data-table">
-              <thead>
-                <tr>
-                  <th>Tiêu đề bài viết</th>
-                  <th>Chuyên mục</th>
-                  <th>Slug</th>
-                  <th>Trạng thái</th>
-                  <th>Hành động</th>
+      <ListControls>
+        <SearchBox label="Tìm trong bài viết" value={list.search} onChange={list.setSearch} />
+        <FilterTabs
+          label="Lọc theo trạng thái"
+          onChange={(value) => list.setFilter("published", value)}
+          options={publishFilterOptions}
+          value={list.filters.published ?? ""}
+        />
+      </ListControls>
+      <section className="admin-card admin-list">
+        <div className="admin-list-heading">
+          <h2>Bài viết</h2>
+          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
+        </div>
+        <div className="admin-data-table-wrap">
+          <table className="admin-data-table">
+            <thead>
+              <tr>
+                <th>Tiêu đề bài viết</th>
+                <th>Chuyên mục</th>
+                <th>Slug</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.items.map((article) => (
+                <tr key={article.id}>
+                  <td>
+                    <strong>{article.title}</strong>
+                  </td>
+                  <td>{article.category}</td>
+                  <td>
+                    <code>{article.slug}</code>
+                  </td>
+                  <td>
+                    <PublishStatus isPublished={article.isPublished} />
+                  </td>
+                  <td>
+                    <RowActions
+                      onDetail={() => setDetail(article)}
+                      onEdit={() => editor.openEdit(article)}
+                      onDelete={() => void editor.remove(article, article.title)}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {list.items.map((article) => (
-                  <tr key={article.id}>
-                    <td>
-                      <strong>{article.title}</strong>
-                    </td>
-                    <td>{article.category}</td>
-                    <td>
-                      <code>{article.slug}</code>
-                    </td>
-                    <td>
-                      <PublishStatus isPublished={article.isPublished} />
-                    </td>
-                    <td>
-                      <RowActions
-                        onDetail={() => setDetail(article)}
-                        onEdit={() => startEdit(article)}
-                        onDelete={() => void remove(article)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {!list.loading && list.items.length === 0 && (
-                  <EmptyRow colSpan={5}>
-                    Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa tìm kiếm.
-                  </EmptyRow>
-                )}
-              </tbody>
-            </table>
+              ))}
+              {!list.loading && list.items.length === 0 && (
+                <EmptyRow colSpan={5}>
+                  Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa/bộ lọc.
+                </EmptyRow>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
+
+      {form && (
+        <Drawer
+          eyebrow="BÀI VIẾT"
+          footer={
+            <FormActions
+              dirty={editor.dirty}
+              onCancel={() => void editor.requestClose()}
+              saveLabel="Lưu bài viết"
+              saving={editor.saving}
+            />
+          }
+          onRequestClose={() => void editor.requestClose()}
+          onSubmit={(event) => void editor.submit(event)}
+          title={editor.isEditing ? "Chỉnh sửa bài viết" : "Thêm bài viết"}
+          wide
+        >
+          <FormError message={editor.error} />
+          <div className="admin-form-grid">
+            <label className="admin-full-width">
+              Tiêu đề
+              <input
+                maxLength={250}
+                onChange={(event) =>
+                  editor.setForm({
+                    ...form,
+                    title: event.target.value,
+                    slug: autoSlug(form.slug, form.title, event.target.value, !editor.isEditing),
+                  })
+                }
+                required
+                value={form.title}
+              />
+            </label>
+            <SlugField
+              hint={editor.isEditing ? "Đổi slug sẽ làm thay đổi đường dẫn công khai của bài viết." : undefined}
+              onChange={(slug) => editor.setForm({ ...form, slug })}
+              source={form.title}
+              value={form.slug}
+            />
+            <Field form={form} name="category" label="Chuyên mục" onChange={editor.setForm} required maxLength={100} />
+            <Field
+              form={form}
+              name="summary"
+              label="Mô tả ngắn"
+              onChange={editor.setForm}
+              required
+              multiline
+              fullWidth
+              maxLength={2000}
+            />
+            <SectionsEditor
+              onChange={(sections) => editor.setForm({ ...form, sections })}
+              value={form.sections}
+            />
           </div>
-        </section>
-      </div>
+          <PublishToggle
+            checked={form.isPublished}
+            onChange={(isPublished) => editor.setForm({ ...form, isPublished })}
+          />
+        </Drawer>
+      )}
+
       {detail && (
         <DetailDialog
           title={detail.title}
           slug={detail.slug}
           isPublished={detail.isPublished}
           onClose={() => setDetail(null)}
-          onEdit={() => startEdit(detail)}
+          onEdit={() => {
+            setDetail(null);
+            editor.openEdit(detail);
+          }}
         >
           <DetailItem label="Chuyên mục">{detail.category}</DetailItem>
           <DetailItem label="Slug">{detail.slug}</DetailItem>

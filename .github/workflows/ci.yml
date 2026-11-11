@@ -33,3 +33,78 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  e2e:
+    name: Admin E2E (Playwright + NestJS + PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: xe_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci -d xe_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Biến cho API (repo server); DB chỉ dùng cho E2E, tạo mới mỗi lần chạy.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/xe_e2e
+      DATABASE_SSL: "false"
+      PORT: "4000"
+      TRUST_PROXY: "0"
+      ADMIN_USERNAME: e2e-admin
+      ADMIN_PASSWORD: e2e-admin-password-123
+      # Biến cho Next.js và Playwright.
+      CONTENT_API_URL: http://127.0.0.1:4000/api/v1
+      E2E_ADMIN_USERNAME: e2e-admin
+      E2E_ADMIN_PASSWORD: e2e-admin-password-123
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout API server
+        uses: actions/checkout@v4
+        with:
+          repository: NguyenDinhNam28803/xechuyendung_project_server
+          ref: main
+          path: .api-server
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            .api-server/package-lock.json
+      - name: Install, migrate and start API
+        working-directory: .api-server
+        run: |
+          npm ci
+          npm run db:migrate
+          npm run build
+          nohup node dist/main > ../api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:4000/health/ready && exit 0
+            sleep 2
+          done
+          cat ../api.log
+          exit 1
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: API log
+        if: failure()
+        run: cat api.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

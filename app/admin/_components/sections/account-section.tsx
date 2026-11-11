@@ -3,9 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { adminFetch, errorMessage, jsonBody } from "../../_lib/admin-api";
 import { roleLabels } from "../../_lib/format";
-import { useFeedback } from "../../_lib/use-paged-list";
 import { useAdminSession } from "../session-context";
-import { Feedback, Field } from "../ui";
+import { Field, FormError } from "../ui";
+import { useUiFeedback } from "../ui-feedback";
 
 type PasswordForm = {
   currentPassword: string;
@@ -21,17 +21,19 @@ const emptyForm: PasswordForm = {
 
 export function AccountSection() {
   const { user } = useAdminSession();
-  const feedback = useFeedback();
+  const { toast } = useUiFeedback();
   const [form, setForm] = useState(emptyForm);
+  const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (form.newPassword !== form.confirmPassword) {
-      feedback.show("Mật khẩu xác nhận không khớp.", true);
+      setError("Mật khẩu xác nhận không khớp.");
       return;
     }
     setSaving(true);
+    setError("");
     try {
       await adminFetch("/account/password", {
         method: "POST",
@@ -41,9 +43,9 @@ export function AccountSection() {
         }),
       });
       setForm(emptyForm);
-      feedback.show("Đã đổi mật khẩu. Các thiết bị khác đã bị đăng xuất.");
-    } catch (error) {
-      feedback.show(errorMessage(error), true);
+      toast("Đã đổi mật khẩu. Các thiết bị khác đã bị đăng xuất.");
+    } catch (submitError) {
+      setError(errorMessage(submitError));
     } finally {
       setSaving(false);
     }
@@ -58,7 +60,7 @@ export function AccountSection() {
           Mật khẩu mới cần tối thiểu 12 ký tự. Sau khi đổi, phiên hiện tại được giữ
           lại, mọi phiên khác bị thu hồi.
         </p>
-        <Feedback message={feedback.message} isError={feedback.isError} />
+        <FormError message={error} />
         <div className="admin-form-grid">
           <Field
             form={form}

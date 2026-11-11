@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./admin.css";
+import "./admin-components.css";
 
 export const metadata: Metadata = {
   title: "Quản trị nội dung",

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { adminFetch, errorMessage, jsonBody } from "../../_lib/admin-api";
+import { adminFetch, errorMessage } from "../../_lib/admin-api";
+import { countNewContacts, searchContacts } from "../../_lib/contact-stats";
 import { actionLabels, formatDate } from "../../_lib/format";
 import type {
   ActivityEntry,
@@ -17,6 +18,8 @@ type Overview = {
   vehicles: number;
   articles: number;
   legal: Record<LegalResourceType, number>;
+  drafts: { vehicles: number; articles: number; legal: number };
+  newContacts: number;
   contacts: PageResponse<ContactSubmission>;
   activity: PageResponse<ActivityEntry>;
 };
@@ -30,23 +33,37 @@ function total(path: string) {
  * danh sách gần đây lấy 5 mục. Các request chạy song song.
  */
 async function loadOverview(): Promise<Overview> {
-  const [vehicles, articles, policy, regulation, legalGuide, contacts, activity] =
-    await Promise.all([
-      total("/vehicles?limit=1"),
-      total("/articles?limit=1"),
-      total("/legal-resources?limit=1&type=policy"),
-      total("/legal-resources?limit=1&type=regulation"),
-      total("/legal-resources?limit=1&type=legal_guide"),
-      adminFetch<PageResponse<ContactSubmission>>("/contact-submissions/search", {
-        method: "POST",
-        body: jsonBody({ page: 1, limit: 5 }),
-      }),
-      adminFetch<PageResponse<ActivityEntry>>("/activity?limit=5"),
-    ]);
+  const [
+    vehicles,
+    articles,
+    policy,
+    regulation,
+    legalGuide,
+    draftVehicles,
+    draftArticles,
+    draftLegal,
+    newContacts,
+    contacts,
+    activity,
+  ] = await Promise.all([
+    total("/vehicles?limit=1"),
+    total("/articles?limit=1"),
+    total("/legal-resources?limit=1&type=policy"),
+    total("/legal-resources?limit=1&type=regulation"),
+    total("/legal-resources?limit=1&type=legal_guide"),
+    total("/vehicles?limit=1&published=false"),
+    total("/articles?limit=1&published=false"),
+    total("/legal-resources?limit=1&published=false"),
+    countNewContacts(),
+    searchContacts({ page: 1, limit: 5 }),
+    adminFetch<PageResponse<ActivityEntry>>("/activity?limit=5"),
+  ]);
   return {
     vehicles,
     articles,
     legal: { policy, regulation, legal_guide: legalGuide },
+    drafts: { vehicles: draftVehicles, articles: draftArticles, legal: draftLegal },
+    newContacts,
     contacts,
     activity,
   };
@@ -93,9 +110,43 @@ export function OverviewSection() {
       detail: "Tổng số yêu cầu",
     },
   ];
+  const draftTotal =
+    overview.drafts.vehicles + overview.drafts.articles + overview.drafts.legal;
+  const firstDraftPage =
+    overview.drafts.vehicles > 0
+      ? "/admin/vehicles?published=false"
+      : overview.drafts.articles > 0
+        ? "/admin/articles?published=false"
+        : "/admin/policies?published=false";
 
   return (
     <>
+      <section className="admin-attention" aria-label="Việc cần xử lý">
+        <Link
+          className={`admin-attention-card${overview.newContacts > 0 ? " is-urgent" : ""}`}
+          href="/admin/contact-submissions?status=new"
+        >
+          <strong>{overview.newContacts}</strong>
+          <span>
+            Yêu cầu liên hệ chờ xử lý
+            <small>
+              {overview.newContacts > 0
+                ? "Khách hàng đang chờ phản hồi — mở hộp thư để xử lý."
+                : "Không có yêu cầu mới."}
+            </small>
+          </span>
+        </Link>
+        <Link className="admin-attention-card" href={firstDraftPage}>
+          <strong>{draftTotal}</strong>
+          <span>
+            Bản nháp chờ duyệt
+            <small>
+              {overview.drafts.vehicles} xe · {overview.drafts.articles} bài viết ·{" "}
+              {overview.drafts.legal} tài liệu pháp lý
+            </small>
+          </span>
+        </Link>
+      </section>
       <section className="admin-overview" aria-label="Chỉ số nội dung">
         {metrics.map((metric) => (
           <Link className="admin-metric-card" href={metric.href} key={metric.href}>

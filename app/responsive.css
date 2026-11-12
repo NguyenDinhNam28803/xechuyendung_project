@@ -1,0 +1,316 @@
+/*
+ * Lớp responsive cuối cùng cho website công khai, import SAU globals.css.
+ *
+ * globals.css được vá nhiều lớp (giá trị gốc rất nhỏ rồi các @media ghi đè),
+ * nên các sửa lỗi bố cục được gom vào đây với breakpoint thống nhất:
+ *   ≤ 1180px  laptop nhỏ / tablet ngang: header hai hàng
+ *   ≤ 960px   tablet dọc: các bố cục hai cột xếp thành một cột
+ *   ≤ 680px   điện thoại
+ * Mỗi khối ghi chú lỗi đã đo được bằng ảnh chụp/Playwright mà nó sửa.
+ */
+
+/* ---------- Mọi khổ màn hình ---------- */
+
+/* Chữ menu, nút CTA, "Xem dịch vụ" không được gãy dòng (đã gãy ở 768–1280px). */
+.main-nav a,
+.header-contact,
+.benefit-link,
+.topbar-info > a {
+  white-space: nowrap;
+}
+
+/* Chú thích ảnh hero chừa đủ chỗ cho cụm nút điều khiển (~240px); trước đây
+   chỉ chừa 190px nên tên xe đè lên nút ở 1280px. */
+.hero-scene .scene-caption {
+  max-width: calc(100% - 270px);
+}
+
+/* Breadcrumb dài (tên xe, tên bài viết) xuống dòng thay vì bị cắt. */
+.breadcrumbs {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+/* Ghi chú dưới gallery chỉ 9px. */
+.gallery-note {
+  font-size: 12px;
+}
+
+/* Logo ở footer chỉ 10px (rule .site-footer .brand-name có độ ưu tiên cao hơn). */
+.site-footer .brand-name {
+  font-size: 13px;
+}
+
+.brand-name small,
+.site-footer .brand-name small {
+  font-size: 11px;
+}
+
+.hero-banner-count {
+  font-size: 12px;
+}
+
+/* Số điện thoại/email trong khối liên hệ chỉ cao 18px: khó bấm. */
+.contact-info dd a {
+  display: inline-block;
+  padding: 6px 0;
+}
+
+/* Checkbox đồng ý 15px: khó bấm trên cảm ứng. */
+.form-consent input {
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
+}
+
+/* ---------- ≤ 1180px: header hai hàng ---------- */
+
+@media (max-width: 1180px) {
+  /* Ở 768–1024px menu 6 mục chen giữa logo và CTA nên bị xuống dòng và dính
+     vào logo. Đưa menu xuống một hàng riêng, cuộn ngang được. */
+  .site-header {
+    height: auto;
+    flex-wrap: wrap;
+    column-gap: 16px;
+    padding-top: 12px;
+  }
+
+  .main-nav {
+    order: 3;
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    gap: 28px;
+    margin-top: 12px;
+    overflow-x: auto;
+    border-top: 1px solid #edf0f0;
+    scrollbar-width: none;
+  }
+
+  .main-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .main-nav a {
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+
+  .header-contact {
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
+
+/* ---------- ≤ 960px: tablet dọc ---------- */
+
+@media (max-width: 960px) {
+  /* Hero hai cột ở 768px: tiêu đề đè lên ảnh. */
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 44px;
+    padding-bottom: 40px;
+  }
+
+  .hero-copy {
+    padding-bottom: 0;
+  }
+
+  .hero-scene {
+    min-height: 360px;
+  }
+
+  /* Bốn ô lợi ích bị bóp, chữ xuống dòng liên tục. */
+  .benefits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .benefit-link {
+    align-self: center;
+  }
+
+  /* Rule ≤900px cũ giới hạn mô tả 150px nên chữ xuống dòng sớm. */
+  .benefit-item small {
+    max-width: none;
+  }
+
+  /* Link "Liên hệ" ở dòng bản quyền bị gãy hai dòng. */
+  .footer-bottom {
+    flex-wrap: wrap;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .footer-bottom a {
+    white-space: nowrap;
+  }
+
+  /* Trang liên hệ: khối tối + form hai cột quá hẹp ở 768px. */
+  .contact-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .contact-heading > p {
+    max-width: none;
+  }
+
+  /* Thanh trên cùng bị gãy hai dòng ở 768px: bỏ khẩu hiệu, giữ thông tin + CTA. */
+  .topbar-brand {
+    display: none;
+  }
+
+  .footer-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 24px;
+  }
+
+  .footer-about,
+  .footer-contact {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- ≤ 680px: điện thoại ---------- */
+
+@media (max-width: 680px) {
+  /* Thanh trên cùng lặp lại nút "Gửi yêu cầu tư vấn" của header. */
+  .topbar {
+    display: none;
+  }
+
+  .site-header {
+    padding-top: 10px;
+  }
+
+  .brand-name {
+    font-size: 13px;
+  }
+
+  .header-contact {
+    min-height: 44px;
+    padding-right: 12px;
+    padding-left: 12px;
+    font-size: 13px;
+  }
+
+  /* Menu cuộn ngang bị cắt chữ mà không có dấu hiệu cuộn: làm mờ mép phải. */
+  .main-nav {
+    gap: 22px;
+    margin-top: 10px;
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+    mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+
+  .main-nav a {
+    font-size: 14px;
+  }
+
+  .main-nav a:last-child {
+    padding-right: 32px;
+  }
+
+  /* Tên xe trên ảnh hero đè lên nút điều khiển: đặt chú thích phía trên nút. */
+  .hero-scene .scene-caption {
+    right: 10px;
+    bottom: 58px;
+    max-width: none;
+  }
+
+  .hero-scene .scene-caption span {
+    font-size: 11px;
+  }
+
+  .hero-scene .scene-caption strong {
+    font-size: 16px;
+  }
+
+  .hero-banner-control {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .hero-scene {
+    min-height: 300px;
+  }
+
+  .benefits {
+    grid-template-columns: 1fr;
+    padding-right: 6%;
+    padding-left: 6%;
+  }
+
+  /* globals.css đặt grid-column: 2 cho link ở khổ này, sinh ra cột ngầm thứ hai. */
+  .benefit-link {
+    grid-column: auto;
+    min-height: 44px;
+    justify-self: start;
+  }
+
+  /* Tiêu đề form và "Trường bắt buộc" chen nhau trên một hàng. */
+  .form-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* Ô tìm xe chỉ cao 24px. */
+  .search-box {
+    min-height: 48px;
+  }
+
+  .search-box input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  /* Liên kết footer cao 22px: tăng vùng bấm lên ~44px. */
+  .footer-column > a {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .footer-column,
+  .footer-contact {
+    gap: 2px;
+  }
+
+  .footer-main {
+    grid-template-columns: 1fr;
+  }
+
+  .breadcrumbs a {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+  }
+
+  /* Link hành động dạng chữ cao 18–24px: tăng vùng bấm, giữ nguyên giao diện. */
+  .card-footer a,
+  .catalog-footer a,
+  .detail-back a,
+  .guide-caveat a,
+  .footer-contact > a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .vehicle-card h2 a,
+  .vehicle-card h3 a {
+    display: inline-block;
+    padding: 6px 0;
+  }
+}

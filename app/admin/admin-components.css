@@ -593,3 +593,88 @@ a.admin-primary-button {
   border-color: #19354a;
   background: #edf4f7;
 }
+
+/* ==========================================================================
+   Responsive trang quản trị (ghi đè các rule ≤760px trong admin.css)
+   ========================================================================== */
+
+/* Chữ 10–11px trong bảng khó đọc. */
+.admin-table-status {
+  font-size: 12px;
+}
+
+.admin-table-button {
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  /* `1fr` không co nhỏ hơn nội dung: menu không xuống dòng làm cột phình
+     ~765px, toàn bộ admin tràn ngang 390px trên điện thoại. */
+  .admin-shell:not(.admin-login-shell) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-sidebar {
+    min-width: 0;
+  }
+
+  .admin-navigation {
+    min-width: 0;
+    -webkit-mask-image: linear-gradient(to right, #000 88%, transparent);
+    mask-image: linear-gradient(to right, #000 88%, transparent);
+  }
+
+  .admin-navigation a {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .admin-navigation a:last-child {
+    margin-right: 28px;
+  }
+
+  /* admin.css ẩn mọi <small> trong menu, kể cả huy hiệu số liên hệ mới. */
+  .admin-navigation a > small.admin-nav-badge {
+    display: inline-block;
+    margin-left: 2px;
+  }
+
+  /* admin.css ẩn cả chân sidebar, nên trên điện thoại không có nút đăng xuất. */
+  .admin-sidebar-footer {
+    display: flex;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+
+  .admin-logout {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .admin-table-button {
+    min-height: 36px;
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .admin-overview-panel .admin-list-heading > a {
+    display: inline-flex;
+    min-height: 40px;
+    align-items: center;
+  }
+
+  /* Nút trên thanh công cụ xuống dòng gọn thay vì kéo dài cả hàng. */
+  .admin-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .admin-toolbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-search {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+}

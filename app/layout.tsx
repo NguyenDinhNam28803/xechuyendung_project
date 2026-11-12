@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./responsive.css";
 
 const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",

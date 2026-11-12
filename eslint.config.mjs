@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Bộ kit của skill design-taste-frontend, chép nguyên bản (skill cấm sửa file kit).
+    "public/assets/**",
   ]),
 ]);
 

@@ -3,7 +3,7 @@
  * server (app/lib/generated/api-schema.ts, sinh bằng `npm run gen:api`).
  * Server đổi schema → chạy lại gen:api → TypeScript báo ngay chỗ lệch.
  */
-import type { components } from "../../lib/generated/api-schema";
+import type { components } from "../../../lib/generated/api-schema";
 
 type Schemas = components["schemas"];
 

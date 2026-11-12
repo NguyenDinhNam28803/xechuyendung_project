@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import SiteFooter from "../components/site-footer";
-import SiteHeader from "../components/site-header";
-import { getPublicLegalResources } from "../lib/content";
+import SiteFooter from "../../components/site-footer";
+import SiteHeader from "../../components/site-header";
+import { getPublicLegalResources } from "../../lib/content";
 
 export const metadata: Metadata = {
   title: "Quy định và tìm hiểu pháp lý",

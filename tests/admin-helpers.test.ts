@@ -12,9 +12,9 @@ import {
   joinParagraphs,
   moveItem,
   splitParagraphs,
-} from "../app/admin/_lib/content-fields.ts";
-import { listQueryString, pageWindow, readListQuery } from "../app/admin/_lib/list-query.ts";
-import { autoSlug, slugify } from "../app/admin/_lib/slug.ts";
+} from "../app/(site)/admin/_lib/content-fields.ts";
+import { listQueryString, pageWindow, readListQuery } from "../app/(site)/admin/_lib/list-query.ts";
+import { autoSlug, slugify } from "../app/(site)/admin/_lib/slug.ts";
 
 describe("slugify", () => {
   it("bỏ dấu tiếng Việt, đổi đ thành d và nối bằng gạch ngang", () => {

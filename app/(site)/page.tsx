@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import ContentImage from "./components/content-image";
-import HomeHeroBanner from "./components/home-hero-banner";
-import SiteFooter from "./components/site-footer";
-import SiteHeader from "./components/site-header";
-import VehicleArtwork from "./components/vehicle-artwork";
-import { getPublicVehicles } from "./lib/content";
+import ContentImage from "../components/content-image";
+import HomeHeroBanner from "../components/home-hero-banner";
+import SiteFooter from "../components/site-footer";
+import SiteHeader from "../components/site-header";
+import VehicleArtwork from "../components/vehicle-artwork";
+import { getPublicVehicles } from "../lib/content";
 
 const benefits = [
   { number: "01", title: "Tư vấn cấu hình", description: "Chọn xe theo mục đích và điều kiện vận hành." },

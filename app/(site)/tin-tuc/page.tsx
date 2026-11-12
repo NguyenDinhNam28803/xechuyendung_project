@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import SiteFooter from "../components/site-footer";
-import SiteHeader from "../components/site-header";
-import { getPublicArticles } from "../lib/content";
+import SiteFooter from "../../components/site-footer";
+import SiteHeader from "../../components/site-header";
+import { getPublicArticles } from "../../lib/content";
 
 export const metadata: Metadata = {
   title: "Kiến thức và hướng dẫn",

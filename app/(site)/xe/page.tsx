@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import SiteFooter from "../components/site-footer";
-import SiteHeader from "../components/site-header";
-import VehicleCatalog from "../components/vehicle-catalog";
-import { getPublicVehicles } from "../lib/content";
+import SiteFooter from "../../components/site-footer";
+import SiteHeader from "../../components/site-header";
+import VehicleCatalog from "../../components/vehicle-catalog";
+import { getPublicVehicles } from "../../lib/content";
 
 export const metadata: Metadata = {
   title: "Danh mục xe tải và xe chuyên dụng",

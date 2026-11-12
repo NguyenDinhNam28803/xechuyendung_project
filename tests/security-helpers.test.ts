@@ -4,7 +4,7 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { safeNextPath } from "../app/admin/_lib/safe-next-path.ts";
+import { safeNextPath } from "../app/(site)/admin/_lib/safe-next-path.ts";
 import { isSameOriginRequest } from "../app/lib/admin-backend.ts";
 import { isAllowedPath } from "../app/lib/admin-paths.ts";
 

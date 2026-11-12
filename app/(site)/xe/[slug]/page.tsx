@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import SiteFooter from "../../components/site-footer";
-import SiteHeader from "../../components/site-header";
-import VehicleGallery from "../../components/vehicle-gallery";
-import { getPublicVehicle } from "../../lib/content";
+import SiteFooter from "../../../components/site-footer";
+import SiteHeader from "../../../components/site-header";
+import VehicleGallery from "../../../components/vehicle-gallery";
+import { getPublicVehicle } from "../../../lib/content";
 
 type VehiclePageProps = { params: Promise<{ slug: string }> };
 

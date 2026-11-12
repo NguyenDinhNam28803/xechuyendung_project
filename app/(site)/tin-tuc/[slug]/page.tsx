@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import SiteFooter from "../../components/site-footer";
-import SiteHeader from "../../components/site-header";
-import { getPublicArticle } from "../../lib/content";
+import SiteFooter from "../../../components/site-footer";
+import SiteHeader from "../../../components/site-header";
+import { getPublicArticle } from "../../../lib/content";
 
 type ArticlePageProps = { params: Promise<{ slug: string }> };
 

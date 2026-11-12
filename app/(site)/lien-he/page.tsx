@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import ContactInfo from "../components/contact-info";
-import ContactForm from "../components/contact-form";
-import SiteFooter from "../components/site-footer";
-import SiteHeader from "../components/site-header";
+import ContactInfo from "../../components/contact-info";
+import ContactForm from "../../components/contact-form";
+import SiteFooter from "../../components/site-footer";
+import SiteHeader from "../../components/site-header";
 
 export const metadata: Metadata = {
   title: "Liên hệ tư vấn xe",

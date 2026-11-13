@@ -124,7 +124,7 @@ a.admin-primary-button {
 
 .admin-unsaved-note {
   margin-right: auto;
-  color: #b57617;
+  color: #986313;
   font-size: 13px;
   font-weight: 600;
 }
@@ -238,7 +238,7 @@ a.admin-primary-button {
 .admin-toast button {
   border: 0;
   background: transparent;
-  color: #6f7e88;
+  color: #637079;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -360,7 +360,7 @@ a.admin-primary-button {
 .admin-field-hint {
   display: block;
   margin: 0;
-  color: #7a8991;
+  color: #647077;
   font-size: 12px;
   font-weight: 400;
   line-height: 1.5;
@@ -395,7 +395,7 @@ a.admin-primary-button {
   border: 1px solid #e3e8e8;
   border-radius: 6px;
   background: #f4f7f8;
-  color: #95a0a6;
+  color: #687074;
   font-weight: 700;
 }
 
@@ -496,7 +496,7 @@ a.admin-primary-button {
   background: #b42318;
   padding: 2px 7px;
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
 }
@@ -539,7 +539,7 @@ a.admin-primary-button {
 }
 
 .admin-attention-card small {
-  color: #6f7e88;
+  color: #637079;
   font-size: 12px;
   font-weight: 400;
 }
@@ -550,7 +550,7 @@ a.admin-primary-button {
 }
 
 .admin-attention-card.is-urgent > strong {
-  color: #b57617;
+  color: #986313;
 }
 
 /* Hộp thư liên hệ */
@@ -677,4 +677,21 @@ a.admin-primary-button {
     grid-template-columns: minmax(0, 1fr);
     gap: 6px;
   }
+}
+
+/* Nút lọc trạng thái: tối thiểu 40px trên điện thoại để dễ chạm (đặt ở đây vì file này nạp sau admin.css). */
+@media (max-width: 640px) {
+  .admin-filter-tabs button {
+    min-height: 40px;
+  }
+}
+
+/* Tiêu đề quản trị: CSS chung đặt letter-spacing -0.05em cho mọi h1–h6; với chữ Barlow Condensed in hoa,
+   các chữ có dấu tiếng Việt ("LỊCH SỬ HOẠT ĐỘNG") bị dính vào nhau và nét quá mảnh ở cỡ 15–21px. */
+.admin-shell :is(h1, h2, h3),
+.admin-drawer :is(h1, h2, h3),
+.admin-detail-dialog :is(h1, h2, h3),
+dialog :is(h1, h2, h3) {
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }

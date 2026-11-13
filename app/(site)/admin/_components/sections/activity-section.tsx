@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { adminFetch } from "../../_lib/admin-api";
-import { actionLabels, entityLabels, formatDate } from "../../_lib/format";
+import { actionLabels, entityLabels, formatDate, readableActivityLabel } from "../../_lib/format";
 import type { ActivityEntry, PageResponse } from "../../_lib/types";
 import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { Feedback, Pagination, SearchBox, Toolbar } from "../ui";
@@ -66,7 +66,7 @@ export function ActivitySection() {
                       </span>
                     </td>
                     <td>{entityLabels[entry.entityType]}</td>
-                    <td>{entry.entityLabel}</td>
+                    <td>{readableActivityLabel(entry.entityLabel)}</td>
                   </tr>
                 ))}
               </tbody>

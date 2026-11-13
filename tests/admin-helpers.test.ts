@@ -15,6 +15,7 @@ import {
 } from "../app/(site)/admin/_lib/content-fields.ts";
 import { listQueryString, pageWindow, readListQuery } from "../app/(site)/admin/_lib/list-query.ts";
 import { autoSlug, slugify } from "../app/(site)/admin/_lib/slug.ts";
+import { readableActivityLabel } from "../app/(site)/admin/_lib/format.ts";
 
 describe("slugify", () => {
   it("bỏ dấu tiếng Việt, đổi đ thành d và nối bằng gạch ngang", () => {
@@ -133,5 +134,21 @@ describe("pageWindow", () => {
     assert.deepEqual(pageWindow(10, 20), [1, "…", 9, 10, 11, "…", 20]);
     assert.deepEqual(pageWindow(1, 20), [1, 2, "…", 20]);
     assert.deepEqual(pageWindow(3, 20), [1, 2, 3, 4, "…", 20]);
+  });
+});
+
+describe("readableActivityLabel (nhật ký không lộ mã trạng thái tiếng Anh)", () => {
+  it("đổi mã trạng thái ở cuối nhãn sang tiếng Việt", () => {
+    assert.equal(
+      readableActivityLabel("Cập nhật trạng thái yêu cầu liên hệ thành in_progress"),
+      "Cập nhật trạng thái yêu cầu liên hệ thành “Đang xử lý”",
+    );
+    assert.equal(
+      readableActivityLabel("Cập nhật trạng thái yêu cầu liên hệ thành spam"),
+      "Cập nhật trạng thái yêu cầu liên hệ thành “Spam”",
+    );
+  });
+  it("giữ nguyên nhãn khác", () => {
+    assert.equal(readableActivityLabel("Đăng nhập: admin"), "Đăng nhập: admin");
   });
 });

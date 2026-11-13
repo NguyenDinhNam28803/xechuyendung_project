@@ -26,7 +26,7 @@
 }
 
 .admin-eyebrow {
-  color: #b57617;
+  color: #986313;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -40,7 +40,7 @@
 
 .admin-login > p {
   margin: 0;
-  color: #6f7e88;
+  color: #637079;
   line-height: 1.6;
 }
 
@@ -93,7 +93,7 @@
 
 .admin-subtitle {
   margin: 8px 0 0;
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
 }
 
@@ -115,7 +115,7 @@
 
 .admin-overview span,
 .admin-overview small {
-  color: #6f7e88;
+  color: #637079;
   font-size: 12px;
 }
 
@@ -140,7 +140,7 @@
   align-items: center;
   gap: 12px;
   margin: 0 0 16px;
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
 }
 
@@ -167,7 +167,7 @@
 
 .admin-form-note {
   margin: -4px 0 18px;
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
   line-height: 1.6;
 }
@@ -182,7 +182,7 @@
 
 .admin-activity .admin-list-heading p {
   margin: 6px 0 0;
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
 }
 
@@ -205,8 +205,8 @@
 }
 
 .admin-activity-table th {
-  color: #6f7e88;
-  font-size: 11px;
+  color: #637079;
+  font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -217,7 +217,7 @@
   background: #eef4f7;
   padding: 4px 8px;
   color: #19354a;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -244,7 +244,7 @@
 .admin-contacts .admin-list-heading p {
   max-width: 720px;
   margin: 6px 0 0;
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -279,7 +279,7 @@
 .admin-contact-meta,
 .admin-contact-main > p,
 .admin-contact-main details {
-  color: #6f7e88;
+  color: #637079;
   font-size: 13px;
 }
 
@@ -307,7 +307,7 @@
   background: #eef4f7;
   padding: 4px 9px;
   color: #19354a;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -452,7 +452,7 @@
 .admin-list-heading span,
 .admin-list-item span,
 .admin-empty {
-  color: #6f7e88;
+  color: #637079;
   font-size: 12px;
 }
 
@@ -623,8 +623,8 @@
   top: 0;
   z-index: 1;
   background: #f7f9fa;
-  color: #687983;
-  font-size: 10px;
+  color: #61717a;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -652,22 +652,22 @@
 
 .admin-data-table td > small {
   margin-top: 3px;
-  color: #849199;
-  font-size: 10px;
+  color: #667076;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
 .admin-data-table td code {
-  color: #5f727e;
+  color: #5e717d;
   font-family: Consolas, monospace;
-  font-size: 11px;
+  font-size: 12px;
   overflow-wrap: anywhere;
 }
 
 .admin-table-summary {
   min-width: 220px;
   max-width: 340px;
-  color: #667780;
+  color: #61717a;
   line-height: 1.5;
 }
 
@@ -677,7 +677,7 @@
   background: #fff4e6;
   padding: 5px 9px;
   color: #94600f;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -702,7 +702,7 @@
   padding: 5px 8px;
   color: #344c5b;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -724,7 +724,7 @@
 
 .admin-table-empty {
   height: 110px;
-  color: #7c8991 !important;
+  color: #667077 !important;
   text-align: center;
 }
 
@@ -746,7 +746,7 @@
 .admin-contact-message-cell {
   min-width: 210px;
   max-width: 280px;
-  color: #657680;
+  color: #60707a;
   line-height: 1.5;
 }
 
@@ -784,7 +784,7 @@
 .admin-contact-table-actions select {
   min-height: 32px;
   padding: 5px 7px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .sr-only {
@@ -878,7 +878,7 @@
 
 .admin-detail-slug {
   overflow-wrap: anywhere;
-  color: #7a8991;
+  color: #647077;
   font-size: 12px;
 }
 
@@ -917,7 +917,7 @@
   background: #fff4e6;
   padding: 5px 10px;
   color: #94600f;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -948,8 +948,8 @@
 
 .admin-detail-grid dt {
   margin-bottom: 6px;
-  color: #7c8991;
-  font-size: 11px;
+  color: #667077;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -964,7 +964,7 @@
 }
 
 .admin-detail-grid dd a {
-  color: #9a6414;
+  color: #986314;
 }
 
 .admin-detail-prose {
@@ -1121,8 +1121,8 @@
 
 .admin-brand small,
 .admin-user small {
-  color: #7d8b94;
-  font-size: 10px;
+  color: #646f76;
+  font-size: 12px;
   letter-spacing: 0.04em;
 }
 
@@ -1149,8 +1149,8 @@
 
 .admin-navigation-label {
   margin: 17px 9px 5px;
-  color: #95a0a6;
-  font-size: 10px;
+  color: #687074;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.09em;
 }
@@ -1182,20 +1182,20 @@
 
 .admin-navigation a > small {
   margin-left: auto;
-  color: #84929a;
-  font-size: 11px;
+  color: #667077;
+  font-size: 12px;
 }
 
 .admin-nav-icon {
   display: inline-grid;
   width: 20px;
   place-items: center;
-  color: #82919a;
+  color: #647077;
   font-size: 15px;
 }
 
 .admin-navigation a.active .admin-nav-icon {
-  color: #b57617;
+  color: #986313;
 }
 
 .admin-sidebar-footer {
@@ -1234,7 +1234,7 @@
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #63747e;
+  color: #60717a;
   cursor: pointer;
   font-size: 17px;
 }
@@ -1262,7 +1262,7 @@
 
 .admin-topbar-date {
   padding-bottom: 4px;
-  color: #829099;
+  color: #657077;
   font-size: 12px;
 }
 
@@ -1285,7 +1285,7 @@
 }
 
 .admin-toolbar-caption {
-  color: #7b8991;
+  color: #657077;
   font-size: 12px;
 }
 
@@ -1319,7 +1319,7 @@
 
 .admin-metric-card > span:nth-of-type(2) {
   margin-top: 5px;
-  color: #6f7e88;
+  color: #637079;
   font-size: 12px;
 }
 
@@ -1329,8 +1329,8 @@
 }
 
 .admin-metric-card small {
-  color: #88959c;
-  font-size: 11px;
+  color: #667075;
+  font-size: 12px;
 }
 
 .admin-metric-icon {
@@ -1349,8 +1349,8 @@
 
 .admin-metric-link {
   margin-top: 5px;
-  color: #a76b12;
-  font-size: 11px;
+  color: #9a6211;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1379,15 +1379,15 @@
 
 .admin-overview-panel .admin-list-heading p {
   margin: 5px 0 0;
-  color: #7c8991;
-  font-size: 11px;
+  color: #667077;
+  font-size: 12px;
   line-height: 1.5;
 }
 
 .admin-overview-panel .admin-list-heading > a {
   flex: 0 0 auto;
-  color: #a76b12;
-  font-size: 11px;
+  color: #9a6211;
+  font-size: 12px;
   font-weight: 700;
   text-decoration: none;
 }
@@ -1421,8 +1421,8 @@
 }
 
 .admin-recent-list article small {
-  color: #849199;
-  font-size: 10px;
+  color: #667076;
+  font-size: 12px;
 }
 
 .admin-recent-icon {
@@ -1433,7 +1433,7 @@
   place-items: center;
   border-radius: 50%;
   background: #f0f5f6;
-  color: #597687;
+  color: #567283;
   font-size: 13px;
 }
 
@@ -1486,7 +1486,7 @@
     flex: 0 0 auto;
     gap: 6px;
     padding: 6px 9px;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .admin-navigation a > small {
@@ -1537,4 +1537,32 @@
 
 .admin-account {
   max-width: 720px;
+}
+
+/* Điện thoại / tablet dọc: bảng rộng 820px cuộn ngang, nên ghim cột cuối (Chi tiết / Sửa / Xóa)
+   ở mép phải để nút thao tác luôn nhìn thấy; bóng mờ báo còn nội dung bên trái. */
+@media (max-width: 900px) {
+  .admin-data-table th:last-child,
+  .admin-data-table td:last-child {
+    position: sticky;
+    right: 0;
+    background: #fff;
+    box-shadow: -10px 0 10px -10px rgba(25, 53, 74, 0.35);
+  }
+  .admin-data-table th:last-child {
+    z-index: 2;
+    background: #f7f9fa;
+  }
+  .admin-data-table td.admin-table-empty:last-child {
+    position: static;
+    box-shadow: none;
+  }
+}
+
+/* "Xin chào, <tên đăng nhập>": không bẻ tên ở dấu gạch ngang ("admin-quantri-" / "xe"). */
+.admin-topbar-date {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

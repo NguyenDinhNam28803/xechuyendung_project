@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { adminFetch, errorMessage } from "../../_lib/admin-api";
 import { countNewContacts, searchContacts } from "../../_lib/contact-stats";
-import { actionLabels, formatDate } from "../../_lib/format";
+import { actionLabels, formatDate, readableActivityLabel } from "../../_lib/format";
 import type {
   ActivityEntry,
   ContactSubmission,
@@ -203,7 +203,7 @@ export function OverviewSection() {
                   <span className="admin-recent-icon">◷</span>
                   <div>
                     <strong>
-                      {actionLabels[entry.action]} · {entry.entityLabel}
+                      {actionLabels[entry.action]} · {readableActivityLabel(entry.entityLabel)}
                     </strong>
                     <small>
                       {entry.actor} · {formatDate(entry.createdAt)}

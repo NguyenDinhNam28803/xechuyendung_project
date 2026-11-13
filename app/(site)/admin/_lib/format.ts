@@ -49,6 +49,14 @@ export const contactStatusLabels: Record<ContactStatus, string> = {
   spam: "Spam",
 };
 
+/** Bản ghi nhật ký cũ lưu mã trạng thái thô ("… thành in_progress"): đổi sang nhãn tiếng Việt khi hiển thị. */
+export function readableActivityLabel(label: string) {
+  return label.replace(
+    /thành (new|in_progress|contacted|closed|spam)$/,
+    (_, status: ContactStatus) => `thành “${contactStatusLabels[status]}”`,
+  );
+}
+
 export const resourceTypeLabels: Record<LegalResourceType, string> = {
   policy: "Chính sách",
   regulation: "Quy định",

@@ -57,7 +57,9 @@ export default function ContactPage() {
       </main>
       <SiteFooter
         title="Muốn nói chuyện trực tiếp?"
-        text={`Gọi ${PHONE_LABEL} (${CONTACT_NAME}) hoặc gửi biểu mẫu phía trên.`}
+        text={`${CONTACT_NAME} nghe máy trực tiếp. Biểu mẫu ở phía trên nếu bạn muốn gửi yêu cầu bằng chữ.`}
+        href={`tel:${PHONE}`}
+        label={`Gọi ${PHONE_LABEL}`}
       />
     </>
   );

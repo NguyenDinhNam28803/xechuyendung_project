@@ -6,8 +6,10 @@ type SiteFooterProps = {
   /** Tiêu đề lời mời cuối trang; mặc định là hành động chính. */
   title?: string;
   text?: string;
-  /** Đường dẫn của nút lớn, ví dụ kèm ?xe=slug ở trang chi tiết. */
+  /** Đường dẫn của nút, ví dụ kèm ?xe=slug ở trang chi tiết, hoặc tel: ở trang liên hệ. */
   href?: string;
+  /** Chữ trên nút; mặc định là hành động chính. */
+  label?: string;
 };
 
 const Arrow = () => (
@@ -21,7 +23,12 @@ export default function SiteFooter({
   title = MAIN_ACTION,
   text = "Ghi dòng xe, công việc và nơi xe chạy. Hai bên làm rõ cấu hình rồi mới xác nhận báo giá.",
   href = MAIN_HREF,
+  label = MAIN_ACTION,
 }: SiteFooterProps) {
+  // Nút cỡ lớn nhưng không trải hết bề ngang (bỏ btn--wide): kit tự đặt min(50%, 640px) từ 640px trở
+  // lên, điện thoại vẫn rộng hết. Bản rộng 1280×88px lấn át tiêu đề và lặp nút "Gửi yêu cầu" của nav.
+  const className = "btn btn--primary btn--xl";
+  const isExternal = href.startsWith("tel:") || href.startsWith("mailto:");
   return (
     <footer className="footer closing footer--dark ground-inverse" aria-labelledby="close-h">
       <div className="wrap">
@@ -30,7 +37,11 @@ export default function SiteFooter({
             <h2 id="close-h">{title}</h2>
             <p>{text}</p>
           </div>
-          <Link className="btn btn--primary btn--xl btn--wide" href={href}>{MAIN_ACTION}<Arrow /></Link>
+          {isExternal ? (
+            <a className={className} href={href}>{label}<Arrow /></a>
+          ) : (
+            <Link className={className} href={href}>{label}<Arrow /></Link>
+          )}
         </div>
         <div className="closing__links">
           <div className="grid">

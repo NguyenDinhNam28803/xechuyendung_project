@@ -15,7 +15,8 @@
  * Voice: facts only (copy-registers 1): câu khẳng định có tên xe và số liệu, xe là chủ ngữ,
  *    không tính từ khen; một giới hạn: thông số là số liệu tham khảo, đối chiếu hồ sơ từng xe.
  * Sections (hero đúng một màn hình; các khối sau cao theo nội dung, xem pageCss):
- *   hero        xe chữa cháy Dongfeng 4 khối trong khung film; nút tư vấn + gọi điện
+ *   hero        hai cột: chữ + nút + 3 dữ kiện bên trái; bên phải khung ảnh trình chiếu 8-10 xe (3 giây/ảnh,
+ *               public/home/hero-slider.js) và thanh thông tin xe ngay dưới ảnh, không đè lên ảnh
  *   #dong-xe    bốn nhóm xe, 4 tile ảnh, mỗi tile lọc sẵn danh mục
  *   #mau-xe     6 mẫu xe có ảnh từ API, lấy lần lượt từng nhóm (ground-surface)
  *   #cau-hinh   xe tải gắn cẩu Soosan 15 tấn, hai ảnh
@@ -67,11 +68,10 @@ function img(image: Img, alt: string, sizes: string, subject: string, extra = ""
 }
 
 /** Ảnh xe từ API (chuỗi đường dẫn, không biết bề rộng gốc): bộ tối ưu không phóng to quá ảnh gốc. */
-function imgPath(src: string, alt: string, sizes: string, extra = "") {
+function imgPath(src: string, alt: string, sizes: string, extra = "", widths = [640, 828, 1080]) {
   if (!src.startsWith("/") || src.startsWith("//")) return `<img src="${esc(src)}" alt="${esc(alt)}" sizes="${sizes}"${extra}>`;
-  const widths = [640, 828, 1080];
   const url = (width: number) => `/_next/image?url=${encodeURIComponent(src)}&amp;w=${width}&amp;q=75`;
-  return `<img src="${url(828)}" srcset="${widths.map((w) => `${url(w)} ${w}w`).join(", ")}" sizes="${sizes}" alt="${esc(alt)}" data-source="client"${extra}>`;
+  return `<img src="${url(widths.includes(828) ? 828 : widths[Math.min(2, widths.length - 1)])}" srcset="${widths.map((w) => `${url(w)} ${w}w`).join(", ")}" sizes="${sizes}" alt="${esc(alt)}" data-source="client"${extra}>`;
 }
 
 const links = (items: NavLink[]) => items.map((link) => `<li><a href="${link.href}">${esc(link.label)}</a></li>`).join("");
@@ -88,6 +88,44 @@ const groups = [
 
 // Ba xe đã có khối riêng trên trang: không lặp lại ở "Mẫu xe tiêu biểu".
 const SHOWN_ELSEWHERE = new Set(["xe-tai-gan-cau", "xe-cuu-ho-san-truot", "xe-chua-chay-isuzu-4-khoi"]);
+
+/* ---------------------------------------------------------------- banner trình chiếu
+   8-10 xe có ảnh, tự chuyển mỗi 3 giây; mỗi slide kèm thẻ thông tin và link tới trang chi tiết. */
+export const HERO_INTERVAL_MS = 3000;
+const HERO_MAX_SLIDES = 10;
+// Slide đầu: ảnh hero đã chọn và cắt sẵn (không lộ tem/logo nhà cung cấp), tải ưu tiên cho LCP.
+const HERO_FIRST_SLUG = "xe-chua-chay-rung";
+
+type HeroSlide = { vehicle: Vehicle; fact?: { label: string; value: string } };
+
+/** Một thông số đáng nói của xe (bỏ các dòng nhãn hiệu/model/trạng thái vốn đã có ở tên xe). */
+function keyFact(vehicle: Vehicle) {
+  return vehicle.knownDetails.find(
+    (detail) => !/nhãn hiệu|model|trạng thái|minh họa|nhóm xe|nguồn/i.test(detail.label) && detail.value.length <= 70,
+  );
+}
+
+/** Xe có ảnh, lần lượt từng nhóm để hai slide liền nhau không cùng loại xe. */
+function roundRobin(vehicles: Vehicle[], count: number) {
+  const byCategory = new Map<string, Vehicle[]>();
+  for (const vehicle of vehicles) byCategory.set(vehicle.category, [...(byCategory.get(vehicle.category) ?? []), vehicle]);
+  const queues = [...byCategory.values()];
+  const picked: Vehicle[] = [];
+  while (picked.length < count && queues.some((queue) => queue.length > 0)) {
+    for (const queue of queues) {
+      const next = queue.shift();
+      if (next && picked.length < count) picked.push(next);
+    }
+  }
+  return picked;
+}
+
+function heroSlides(vehicles: Vehicle[]): HeroSlide[] {
+  const withImages = vehicles.filter((vehicle) => vehicle.images.length > 0);
+  const first = withImages.find((vehicle) => vehicle.slug === HERO_FIRST_SLUG);
+  const rest = roundRobin(withImages.filter((vehicle) => vehicle !== first), HERO_MAX_SLIDES - (first ? 1 : 0));
+  return (first ? [first, ...rest] : rest).map((vehicle) => ({ vehicle, fact: keyFact(vehicle) }));
+}
 
 /** Sáu xe có ảnh, lấy lần lượt từng nhóm để không dồn một loại xe. */
 function featuredVehicles(vehicles: Vehicle[], count = 6) {
@@ -135,8 +173,66 @@ html[data-type] main > section.section:not(.hero) > .wrap:not(.grid) { display: 
   html[data-type] main > section.section:not(.hero) { padding: var(--s-8) 0 calc(var(--s-8) + var(--bar)); }
 }
 ol.grid, ul.grid, .home-articles { list-style: none; margin: 0; padding: 0; }
-/* hero: hai nút trên khung tối */
-.hero--film .hero__over .btn-row { gap: var(--s-3); }
+/* ---- hero hai cột: chữ bên trái trên nền trang, ảnh bên phải không bị gì che ----
+   Bản trước đặt khối tiêu đề và thẻ xe lên trên ảnh (hero--film), che hơn nửa chiếc xe. */
+.hero--split .hero-copy h1 { font-size: clamp(36px, 2.4vw + 18px, 56px); line-height: 1.06; max-width: 14ch; font-stretch: var(--display-stretch); }
+.hero--split .hero__lead { font-size: var(--t-lead); line-height: 1.5; max-width: 46ch; }
+.hero--split .btn-row { gap: var(--s-3); }
+.hero--split .hero-facts { padding-top: var(--s-5); border-top: 1px solid var(--line); }
+.hero--split .hero-facts dd { font: var(--display-weight) var(--t-h3)/1.2 var(--font-display); letter-spacing: var(--display-tracking); }
+.hero-visual { display: flex; flex-direction: column; gap: var(--s-3); }
+/* ---- khung ảnh trình chiếu: các ảnh chồng lên nhau, ảnh đang xem hiện dần ---- */
+.hs-frame { position: relative; flex: 1 1 auto; min-height: 320px; border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
+.hs { position: absolute; inset: 0; }
+.hs__slide { position: absolute; inset: 0; margin: 0; opacity: 0; visibility: hidden; transition: opacity 700ms var(--ease), visibility 0s linear 700ms; }
+.hs__slide.is-on { opacity: 1; visibility: visible; transition: opacity 700ms var(--ease), visibility 0s; }
+.hs__slide > img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover;
+  object-position: var(--ly-pos, 50% 55%); transform: scale(1.05); transition: transform 3600ms linear; }
+.hs__slide.is-on > img { transform: scale(1); }
+/* ---- thanh thông tin xe ngay dưới ảnh (không đè lên ảnh) ---- */
+.hs-card { flex: 0 0 auto; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--s-3) var(--s-5);
+  padding: var(--s-4) var(--s-5); border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
+.hs-card__info[hidden] { display: none; }
+.hs-card__info { display: grid; gap: 2px; min-width: 0; }
+.hs-card__label { font-size: var(--t-label); color: var(--muted); }
+.hs-card__name { font: 500 var(--t-card)/1.3 var(--font-text); letter-spacing: -0.01em; }
+/* tên và thông số xuống tối đa 2 dòng: tên xe dài ("FAW JH6 8×4 thùng lửng gắn cẩu Soosan 15 tấn") không bị cắt giữa chừng */
+.hs-card__name a { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hs-card__name a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hs-card__fact { font-size: var(--t-small); color: var(--ink); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.hs-card__fact span { color: var(--muted); }
+/* thanh 3 giây ở mép trên */
+.hs-card__bar { position: absolute; inset: 0 0 auto 0; height: 3px; background: var(--line); }
+.hs-card__bar > i { display: block; height: 100%; width: 100%; background: var(--action); transform: scaleX(0); transform-origin: left; }
+.hs-card.is-playing .hs-card__bar > i { animation: hs-progress var(--hs-ms, 3000ms) linear forwards; }
+@keyframes hs-progress { to { transform: scaleX(1); } }
+.hs-card__controls { display: flex; align-items: center; gap: var(--s-2); }
+.hs-card__more { margin-right: var(--s-2); white-space: nowrap; }
+.hs-card__controls button { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-btn); border: 1px solid var(--line-strong);
+  background: var(--bg); color: var(--ink); cursor: pointer; flex: none; }
+.hs-card__controls button:hover { background: color-mix(in oklab, var(--ink) 8%, var(--bg)); }
+.hs-card__controls button:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+.hs-card__controls svg { width: 16px; height: 16px; }
+.hs-card__count { min-width: 3.2em; text-align: center; font-size: var(--t-small); font-variant-numeric: tabular-nums; color: var(--muted); }
+.hs-card__count b { color: var(--ink); font-weight: 500; }
+html:not(.hs-js) .hs-card__controls > :not(.hs-card__more) { display: none; }
+@media (max-width: 1023px) {
+  .hero--split .hero-copy, .hero--split .hero-visual { grid-column: 1 / -1; }
+  .hero--split .hero-facts { display: none; }
+  .hs-frame { flex: 1 1 auto; min-height: 260px; }
+}
+@media (max-width: 639px) {
+  /* cột ảnh của kit cao theo phần còn lại của màn hình; trên điện thoại để nó cao theo nội dung */
+  .hero--split .hero-visual { flex: 0 0 auto; height: auto; }
+  .hs-frame { flex: 0 0 auto; min-height: 0; aspect-ratio: 4 / 3; }
+  .hs-card { grid-template-columns: minmax(0, 1fr); padding: var(--s-4); }
+  .hs-card__fact { display: none; }
+  .hs-card__more { margin-right: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hs__slide, .hs__slide.is-on { transition: none; }
+  .hs__slide > img, .hs__slide.is-on > img { transform: none; transition: none; }
+}
 /* mẫu xe tiêu biểu: ba cột, hai cột trên tablet */
 .home-models { row-gap: var(--s-7); }
 .home-models .tile__media { --tile-ratio: 4 / 3; }
@@ -200,13 +296,6 @@ ol.grid, ul.grid, .home-articles { list-style: none; margin: 0; padding: 0; }
 /* ảnh cạnh bảng thông số */
 .spec-photo { margin: 0; border-radius: var(--r-lg); overflow: hidden; aspect-ratio: 1 / 1; }
 @media (max-width: 1023px) { .spec-photo { aspect-ratio: 4 / 3; } }
-/* hộp chữ của hero film: chữ tiếng Việt có dấu rộng hơn, cho h1 đủ chỗ trong ba dòng */
-.hero--film .hero__over > div { max-width: 720px; }
-.hero--film .hero__over h1 { max-width: none; }
-@media (max-width: 639px) {
-  .hero--film .hero__over { padding-inline: var(--s-4); }
-  .hero--film .hero__over h1 { font-stretch: 100%; }
-}
 `;
 
 function vehicleHref(vehicles: Vehicle[], slug: string) {
@@ -222,10 +311,9 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[], articles: A
     .map((label) => isuzu?.knownDetails.find((detail) => detail.label === label))
     .filter((detail): detail is { label: string; value: string } => Boolean(detail));
   const href = (slug: string) => vehicleHref(vehicles, slug);
-  // Dữ kiện cứng trên màn hình đầu (copy.md rule 2): số dòng xe thật đang hiển thị.
-  const leadFact = vehicles.length > 0 ? `${vehicles.length} dòng xe trong 4 nhóm. ` : "";
   const models = featuredVehicles(vehicles.length > 0 ? vehicles : fallback);
   const latest = articles.slice(0, 3);
+  const slides = heroSlides(vehicles.length > 0 ? vehicles : fallback);
   const navItem = (link: NavLink) => `<div class="nav__item"><a class="nav__link" href="${link.href}">${esc(link.label)}</a></div>`;
   const menuLink = (link: NavLink) => `<a href="${link.href}">${esc(link.label)}<span>${esc(link.line ?? "")}</span></a>`;
 
@@ -301,20 +389,64 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[], articles: A
 </header>
 
 <main id="top">
-  <section class="hero hero--film" data-enter aria-labelledby="hero-h">
-    <div class="wrap"><div class="hero-text hero__in">
-      <div class="hero__media hero__fill">
-        ${img(dongfengFire, "Xe chữa cháy Dongfeng cabin đôi màu đỏ đỗ trên nền bê tông ướt", "(max-width: 639px) 1100px, 1280px", "xe chữa cháy Dongfeng 4 khối", ' style="--ly-pos: 62% 55%; --ly-pos-phone: 60% 50%" fetchpriority="high"')}
-        <div class="hero__over">
-          <div>
-            <h1 id="hero-h">Xe tải và xe chuyên dụng cho doanh nghiệp</h1>
-            <p class="hero__lead">${esc(leadFact)}Xe chữa cháy, cứu hộ, xe bồn và xe tải gắn cẩu, cấu hình theo việc xe sẽ làm. Thông số được đối chiếu với hồ sơ từng xe trước khi báo giá.</p>
-            <div class="btn-row">
-              <a class="btn btn--primary" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a>
-              <a class="btn btn--secondary" href="tel:${PHONE}">Gọi ${PHONE_LABEL}</a>
-            </div>
-          </div>
+  <section class="hero hero--split" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text hero-split grid">
+      <div class="hero-copy span-5">
+        <h1 id="hero-h">Xe tải và xe chuyên dụng cho doanh nghiệp</h1>
+        <p class="hero__lead">Xe chữa cháy, cứu hộ, xe bồn và xe tải gắn cẩu, cấu hình theo việc xe sẽ làm. Thông số được đối chiếu với hồ sơ từng xe trước khi báo giá.</p>
+        <div class="btn-row">
+          <a class="btn btn--primary" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a>
+          <a class="btn btn--secondary" href="tel:${PHONE}">Gọi ${PHONE_LABEL}</a>
         </div>
+        <dl class="hero-facts">
+          <div><dt>Dòng xe trong danh mục</dt><dd>${vehicles.length > 0 ? vehicles.length : fallback.length} dòng</dd></div>
+          <div><dt>Nhóm xe</dt><dd>4 nhóm</dd></div>
+          <div><dt>Khu vực hỗ trợ</dt><dd>Toàn quốc</dd></div>
+        </dl>
+      </div>
+      <div class="hero-visual span-7 start-6">
+        <div class="hs-frame">
+        ${
+          slides.length > 0
+            ? `<div class="hs" id="hero-slides" data-interval="${HERO_INTERVAL_MS}">
+          ${slides
+            .map(
+              (slide, index) => `<figure class="hs__slide${index === 0 ? " is-on" : ""}" aria-hidden="${index === 0 ? "false" : "true"}">${
+                slide.vehicle.slug === HERO_FIRST_SLUG
+                  ? img(dongfengFire, "Xe chữa cháy Dongfeng cabin đôi màu đỏ đỗ trên nền bê tông ướt", "(max-width: 1023px) 100vw, 760px", "xe chữa cháy Dongfeng 4 khối", ' style="--ly-pos: 62% 55%" fetchpriority="high"')
+                  : imgPath(slide.vehicle.images[0], slide.vehicle.name, "(max-width: 1023px) 100vw, 760px", `${index === 0 ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async"`, [828, 1080, 1200, 1920])
+              }</figure>`,
+            )
+            .join("\n          ")}
+        </div>`
+            : `<div class="hs"><figure class="hs__slide is-on">${img(dongfengFire, "Xe chữa cháy Dongfeng cabin đôi màu đỏ đỗ trên nền bê tông ướt", "(max-width: 1023px) 100vw, 760px", "xe chữa cháy Dongfeng 4 khối", ' style="--ly-pos: 62% 55%" fetchpriority="high"')}</figure></div>`
+        }
+        </div>
+        ${
+          slides.length > 0
+            ? `<div class="hs-card" role="region" aria-roledescription="carousel" aria-label="Xe tiêu biểu">
+          <div class="hs-card__bar" aria-hidden="true"><i></i></div>
+          <div class="hs-card__live" aria-live="off">
+            ${slides
+              .map(
+                (slide, index) => `<div class="hs-card__info" role="group" aria-roledescription="slide" aria-label="${index + 1} / ${slides.length}"${index === 0 ? "" : " hidden"}>
+              <p class="hs-card__label">${esc(slide.vehicle.category)} · ${esc(slide.vehicle.make)}</p>
+              <p class="hs-card__name"><a href="/xe/${esc(slide.vehicle.slug)}">${esc(slide.vehicle.name)}</a></p>
+              ${slide.fact ? `<p class="hs-card__fact"><span>${esc(slide.fact.label)}:</span> ${esc(slide.fact.value)}</p>` : ""}
+            </div>`,
+              )
+              .join("\n            ")}
+          </div>
+          <div class="hs-card__controls">
+            <a class="btn btn--secondary btn--sm hs-card__more" data-hs-more href="/xe/${esc(slides[0].vehicle.slug)}">Xem chi tiết xe</a>
+            <span class="hs-card__count"><b data-hs-count>1</b> / ${slides.length}</span>
+            <button type="button" data-hs-prev aria-label="Xe trước" aria-controls="hero-slides"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" data-hs-toggle aria-label="Tạm dừng trình chiếu" aria-controls="hero-slides"><svg viewBox="0 0 16 16" aria-hidden="true"><path data-icon-pause d="M5.5 3.5v9M10.5 3.5v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path data-icon-play d="M5 3.2v9.6L12.5 8z" fill="currentColor" hidden/></svg></button>
+            <button type="button" data-hs-next aria-label="Xe tiếp theo" aria-controls="hero-slides"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>`
+            : ""
+        }
       </div>
     </div></div>
   </section>
@@ -495,6 +627,7 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[], articles: A
 <script type="module" src="/assets/system.js"></script>
 <script type="module" src="/assets/motion/motion.js"></script>
 <script type="module" src="/assets/layout/layout.js"></script>
+${slides.length > 1 ? `<script type="module" src="/home/hero-slider.js"></script>` : ""}
 </body>
 </html>`;
 }

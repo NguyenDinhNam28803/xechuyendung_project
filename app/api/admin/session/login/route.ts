@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import {
   apiBaseUrl,
+  clientAddressHeaders,
   isRecord,
   messageFrom,
   readJson,
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         "User-Agent": request.headers.get("user-agent") ?? "next-admin-proxy",
+        ...clientAddressHeaders(request),
       },
       body: JSON.stringify({
         username: credentials.username,

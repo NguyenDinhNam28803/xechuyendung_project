@@ -1,7 +1,7 @@
 # Xe Chuyên Dụng — Client
 
 Ứng dụng web Next.js dành cho khách truy cập và trang quản trị nội dung. Client
-chạy mặc định ở `http://localhost:3000`; API NestJS chạy riêng ở cổng `4000`
+chạy mặc định ở `http://localhost:3002`; API NestJS chạy riêng ở cổng `4000`
 trong repository
 [`xechuyendung_project_server`](https://github.com/NguyenDinhNam28803/xechuyendung_project_server).
 
@@ -165,7 +165,7 @@ server.
    `.env.example` mặc định trỏ đến API local. Nếu `.env.local` đã tồn tại, hãy
    kiểm tra `CONTENT_API_URL` thay vì ghi đè các thiết lập khác.
 
-3. Mở `http://localhost:3000`; trang quản trị ở `http://localhost:3000/admin`.
+3. Mở `http://localhost:3002`; trang quản trị ở `http://localhost:3002/admin`.
 
 Nếu đổi cổng hoặc địa chỉ server, cập nhật `CONTENT_API_URL` trong
 `.env.local` thành URL API đầy đủ, ví dụ
@@ -252,3 +252,7 @@ tests/                   # node:test
 
 Chi tiết API, database và migrations xem tại
 [README server](https://github.com/NguyenDinhNam28803/xechuyendung_project_server#readme).
+
+## Triển khai production (VPS)
+
+Xem [deploy/DEPLOY.md](deploy/DEPLOY.md): Nginx + PM2 + HTTPS, biến môi trường, firewall và danh sách kiểm tra sau deploy.

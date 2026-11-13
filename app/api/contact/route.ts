@@ -1,5 +1,4 @@
-const apiBaseUrl =
-  process.env.CONTENT_API_URL ?? "http://localhost:4000/api/v1";
+import { apiBaseUrl, clientAddressHeaders } from "../../lib/admin-backend";
 
 export async function POST(request: Request) {
   const contentLength = Number(request.headers.get("content-length") ?? 0);
@@ -35,7 +34,8 @@ export async function POST(request: Request) {
   try {
     response = await fetch(`${apiBaseUrl}/contact-submissions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      // IP thật của khách để API giới hạn 10 yêu cầu/giờ cho TỪNG người, không phải cho cả site.
+      headers: { "Content-Type": "application/json", ...clientAddressHeaders(request) },
       body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),

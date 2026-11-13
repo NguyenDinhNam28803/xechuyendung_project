@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { safeNextPath } from "../app/(site)/admin/_lib/safe-next-path.ts";
-import { isSameOriginRequest } from "../app/lib/admin-backend.ts";
+import { clientAddressHeaders, isSameOriginRequest } from "../app/lib/admin-backend.ts";
 import { isAllowedPath } from "../app/lib/admin-paths.ts";
 
 const id = "40f050b4-73d1-47f4-b832-c14246d039d4";
@@ -96,5 +96,25 @@ describe("isSameOriginRequest (chống CSRF)", () => {
       isSameOriginRequest(request({ host: "localhost:3000", "sec-fetch-site": "cross-site" })),
       false,
     );
+  });
+});
+
+describe("clientAddressHeaders (giới hạn tần suất theo từng khách)", () => {
+  const withHeaders = (headers: Record<string, string>) =>
+    new Request("http://localhost:3000/api/contact", { method: "POST", headers });
+
+  it("chuyển X-Real-IP (do Nginx ghi đè) thành X-Forwarded-For cho API", () => {
+    assert.deepEqual(clientAddressHeaders(withHeaders({ "x-real-ip": "203.0.113.7" })), {
+      "X-Forwarded-For": "203.0.113.7",
+    });
+    assert.deepEqual(clientAddressHeaders(withHeaders({ "x-real-ip": "2001:db8::1" })), {
+      "X-Forwarded-For": "2001:db8::1",
+    });
+  });
+
+  it("bỏ qua X-Forwarded-For do khách tự gửi và giá trị không phải IP", () => {
+    assert.deepEqual(clientAddressHeaders(withHeaders({ "x-forwarded-for": "1.2.3.4" })), {});
+    assert.deepEqual(clientAddressHeaders(withHeaders({ "x-real-ip": "1.2.3.4, 5.6.7.8" })), {});
+    assert.deepEqual(clientAddressHeaders(withHeaders({ "x-real-ip": "evil.example" })), {});
   });
 });

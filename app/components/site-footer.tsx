@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FOOTER_LEDE, footerInfo, footerLegal, navGroups } from "./site-nav";
 import { CONTACT_NAME, EMAIL, MAIN_ACTION, MAIN_HREF, PHONE, PHONE_LABEL } from "./site-constants";
 
 /* Phần kết của mọi trang: close-type + footer-dark trên nền đảo (giống trang chủ). */
@@ -47,31 +48,24 @@ export default function SiteFooter({
           <div className="grid">
             <div className="span-4 stack-4">
               <Link className="nav__logo" href="/">Xe Chuyên Dụng</Link>
-              <p className="footer__lede">Tư vấn xe tải và xe chuyên dụng theo công việc, hỗ trợ khách hàng toàn quốc.</p>
+              <p className="footer__lede">{FOOTER_LEDE}</p>
             </div>
             <div className="span-2 footer__col">
               <h3>Danh mục</h3>
               <ul>
-                <li><Link href="/xe?loai=xe-tai">Xe tải</Link></li>
-                <li><Link href="/xe?loai=xe-chua-chay">Xe chữa cháy</Link></li>
-                <li><Link href="/xe?loai=xe-cuu-ho">Xe cứu hộ</Link></li>
-                <li><Link href="/xe?loai=xe-bon-moi-truong">Xe môi trường</Link></li>
+                {navGroups.map((link) => <li key={link.href}><Link href={link.href}>{link.label}</Link></li>)}
               </ul>
             </div>
             <div className="span-2 footer__col">
               <h3>Thông tin</h3>
               <ul>
-                <li><Link href="/gioi-thieu">Giới thiệu</Link></li>
-                <li><Link href="/dich-vu">Dịch vụ</Link></li>
-                <li><Link href="/tu-van-mua-xe">Tư vấn mua xe</Link></li>
-                <li><Link href="/tin-tuc">Kiến thức</Link></li>
+                {footerInfo.map((link) => <li key={link.href}><Link href={link.href}>{link.label}</Link></li>)}
               </ul>
             </div>
             <div className="span-2 footer__col">
               <h3>Pháp lý</h3>
               <ul>
-                <li><Link href="/chinh-sach">Chính sách</Link></li>
-                <li><Link href="/phap-ly">Quy định</Link></li>
+                {footerLegal.map((link) => <li key={link.href}><Link href={link.href}>{link.label}</Link></li>)}
               </ul>
             </div>
             <div className="span-2 footer__col">

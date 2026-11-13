@@ -14,13 +14,17 @@
  *    moment picture-develops ở #cuu-ho. Không effect, không ground (kind other).
  * Voice: facts only (copy-registers 1): câu khẳng định có tên xe và số liệu, xe là chủ ngữ,
  *    không tính từ khen; một giới hạn: thông số là số liệu tham khảo, đối chiếu hồ sơ từng xe.
- * Screens (1440x900):
- *   hero      xe chữa cháy Dongfeng 4 khối trong khung film; object
- *   #dong-xe  bốn nhóm xe, 4 tile ảnh; line-up; 1
- *   #cau-hinh xe tải gắn cẩu Soosan 15 tấn, trio (toàn xe, cẩu, lòng thùng); parts; 1
- *   #cuu-ho   dark-band, xe cứu hộ sàn trượt, ảnh hiện dần (picture-develops); object; 1
- *   #thong-so thông số Isuzu 4 khối (rows--spec) cạnh ảnh xe; object; 1
- *   footer.closing close-type + footer-dark; 1
+ * Sections (hero đúng một màn hình; các khối sau cao theo nội dung, xem pageCss):
+ *   hero        xe chữa cháy Dongfeng 4 khối trong khung film; nút tư vấn + gọi điện
+ *   #dong-xe    bốn nhóm xe, 4 tile ảnh, mỗi tile lọc sẵn danh mục
+ *   #mau-xe     6 mẫu xe có ảnh từ API, lấy lần lượt từng nhóm (ground-surface)
+ *   #cau-hinh   xe tải gắn cẩu Soosan 15 tấn, hai ảnh
+ *   #cuu-ho     dark-band, xe cứu hộ sàn trượt, ảnh hiện dần (picture-develops)
+ *   #thong-so   thông số Isuzu 4 khối (rows--spec) cạnh ảnh xe
+ *   #quy-trinh  bốn bước tư vấn (data/service-steps.ts, cùng trang Dịch vụ)
+ *   #kien-thuc  ba bài viết mới nhất từ API
+ *   footer.closing close-type có người liên hệ, điện thoại, email + footer-dark
+ * Nav và các cột chân trang lấy từ components/site-nav.ts, cùng nguồn với các trang con.
  */
 import cuuHoFront from "../assets/cuuhobachucnang/1792026707412_5605664729049142053_5605664729049142053_6fde3b00a020e62eaf9cce83281391a4.jpg";
 import dongLanh from "../assets/xedonglanh/1792026681019_5605664729049142053_5605664729049142053_dc716bdc224457253a602642d048ea1f.jpg";
@@ -31,15 +35,13 @@ import fawCrane03 from "../assets/faw-jh6-gan-cau/faw-jh6-crane-03.png";
 import dongfengFire from "../assets/xe-chua-chay-dongfeng-4/dongfeng-fire-4-01.jpg";
 import isuzuFireFront from "../assets/xe-chua-chay-isuzu-4-khoi/isuzu-fire-01.png";
 import fotonWaste from "../assets/xe-hut-chat-thai-foton-7/foton-waste-7-01.png";
+import { CONTACT_NAME, EMAIL, MAIN_ACTION, MAIN_HREF, PHONE, PHONE_LABEL } from "../components/site-constants";
+import { FOOTER_LEDE, footerInfo, footerLegal, navGroups, navLinks, navModels, type NavLink } from "../components/site-nav";
+import type { Article } from "../data/articles";
+import { serviceSteps } from "../data/service-steps";
 import type { Vehicle } from "../data/vehicles";
 
 type Img = { src: string; width: number };
-
-const MAIN_ACTION = "Gửi yêu cầu tư vấn";
-const MAIN_HREF = "/lien-he#contact-form";
-const PHONE = "0977170705";
-const PHONE_LABEL = "0977 170 705";
-const EMAIL = "phuocnguyen1108@gmail.com";
 
 /** Escape cho nội dung chữ và thuộc tính (dữ liệu xe đến từ API). */
 export function esc(value: string | number) {
@@ -64,15 +66,44 @@ function img(image: Img, alt: string, sizes: string, subject: string, extra = ""
   return `<img src="${url(widths[Math.min(2, widths.length - 1)])}" srcset="${srcset}" sizes="${sizes}" alt="${esc(alt)}" data-source="client" data-subject="${esc(subject)}"${extra}>`;
 }
 
+/** Ảnh xe từ API (chuỗi đường dẫn, không biết bề rộng gốc): bộ tối ưu không phóng to quá ảnh gốc. */
+function imgPath(src: string, alt: string, sizes: string, extra = "") {
+  if (!src.startsWith("/") || src.startsWith("//")) return `<img src="${esc(src)}" alt="${esc(alt)}" sizes="${sizes}"${extra}>`;
+  const widths = [640, 828, 1080];
+  const url = (width: number) => `/_next/image?url=${encodeURIComponent(src)}&amp;w=${width}&amp;q=75`;
+  return `<img src="${url(828)}" srcset="${widths.map((w) => `${url(w)} ${w}w`).join(", ")}" sizes="${sizes}" alt="${esc(alt)}" data-source="client"${extra}>`;
+}
+
+const links = (items: NavLink[]) => items.map((link) => `<li><a href="${link.href}">${esc(link.label)}</a></li>`).join("");
+
 const arrow = `<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>`;
 const chev = `<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const groups = [
-  { category: "Xe tải", line: "Thùng bạt, thùng kín, thùng lửng, ben, đông lạnh và gắn cẩu.", image: dongLanh, alt: "Xe tải Hyundai thùng đông lạnh màu trắng đỗ trong sân" },
-  { category: "Xe chữa cháy", line: "Bồn nước và foam từ 2,5 đến 6,5 khối, nền Dongfeng và Isuzu.", image: dongfeng65, alt: "Xe chữa cháy Dongfeng cabin đôi màu đỏ nhìn thẳng từ phía trước" },
-  { category: "Xe cứu hộ", line: "Sàn trượt, nâng đầu và càng kéo; có loại lắp thêm cẩu.", image: cuuHoFront, alt: "Xe cứu hộ sàn trượt màu trắng có cần cẩu vàng, nhìn chéo phía trước" },
-  { category: "Xe bồn / xe môi trường", line: "Bồn nước, hút chất thải, ép rác và quét đường.", image: fotonWaste, alt: "Xe hút chất thải Foton với bồn màu cam", pos: "70% 50%" },
+  { category: "Xe tải", href: "/xe?loai=xe-tai", line: "Thùng bạt, thùng kín, thùng lửng, ben, đông lạnh và gắn cẩu.", image: dongLanh, alt: "Xe tải Hyundai thùng đông lạnh màu trắng đỗ trong sân" },
+  { category: "Xe chữa cháy", href: "/xe?loai=xe-chua-chay", line: "Bồn nước và foam từ 2,5 đến 6,5 khối, nền Dongfeng và Isuzu.", image: dongfeng65, alt: "Xe chữa cháy Dongfeng cabin đôi màu đỏ nhìn thẳng từ phía trước" },
+  { category: "Xe cứu hộ", href: "/xe?loai=xe-cuu-ho", line: "Sàn trượt, nâng đầu và càng kéo; có loại lắp thêm cẩu.", image: cuuHoFront, alt: "Xe cứu hộ sàn trượt màu trắng có cần cẩu vàng, nhìn chéo phía trước" },
+  { category: "Xe bồn / xe môi trường", href: "/xe?loai=xe-bon-moi-truong", line: "Bồn nước, hút chất thải, ép rác và quét đường.", image: fotonWaste, alt: "Xe hút chất thải Foton với bồn màu cam", pos: "70% 50%" },
 ];
+
+// Ba xe đã có khối riêng trên trang: không lặp lại ở "Mẫu xe tiêu biểu".
+const SHOWN_ELSEWHERE = new Set(["xe-tai-gan-cau", "xe-cuu-ho-san-truot", "xe-chua-chay-isuzu-4-khoi"]);
+
+/** Sáu xe có ảnh, lấy lần lượt từng nhóm để không dồn một loại xe. */
+function featuredVehicles(vehicles: Vehicle[], count = 6) {
+  const pool = vehicles.filter((vehicle) => vehicle.images.length > 0 && !SHOWN_ELSEWHERE.has(vehicle.slug));
+  const byCategory = new Map<string, Vehicle[]>();
+  for (const vehicle of pool) byCategory.set(vehicle.category, [...(byCategory.get(vehicle.category) ?? []), vehicle]);
+  const queues = [...byCategory.values()];
+  const picked: Vehicle[] = [];
+  while (picked.length < count && queues.some((queue) => queue.length > 0)) {
+    for (const queue of queues) {
+      const next = queue.shift();
+      if (next && picked.length < count) picked.push(next);
+    }
+  }
+  return picked;
+}
 
 // Năm dòng ngắn; mô tả dài (súng phun, động cơ) để ở trang chi tiết xe.
 const specLabels = ["Nhãn hiệu / model", "Cabin", "Kích thước xe", "Dung tích bồn", "Bơm chữa cháy"];
@@ -93,6 +124,59 @@ const rootTokens = `:root {
 
 /* CSS riêng của trang: chỉ những gì nằm trong visual mà kit không có ("page CSS" của skill). */
 const pageCss = `
+/* Chiều cao theo nội dung (hero vẫn đúng một màn hình). Kit ép mỗi section cao 1 màn hình nên các khối
+   ngắn để trống 20-40% (khối gắn cẩu trống 41% ở 1440): trang trông thưa. Giống public.css của trang con. */
+html[data-type] main > section.section:not(.hero),
+html[data-type] footer.closing { height: auto; min-height: 0; }
+html[data-type] main > section.section:not(.hero) { padding: var(--s-9) 0 calc(var(--s-9) + var(--bar)); }
+html[data-type] main > section.section:not(.hero) > .wrap { height: auto; }
+html[data-type] main > section.section:not(.hero) > .wrap:not(.grid) { display: block; }
+@media (max-width: 639px) {
+  html[data-type] main > section.section:not(.hero) { padding: var(--s-8) 0 calc(var(--s-8) + var(--bar)); }
+}
+ol.grid, ul.grid, .home-articles { list-style: none; margin: 0; padding: 0; }
+/* hero: hai nút trên khung tối */
+.hero--film .hero__over .btn-row { gap: var(--s-3); }
+/* mẫu xe tiêu biểu: ba cột, hai cột trên tablet */
+.home-models { row-gap: var(--s-7); }
+.home-models .tile__media { --tile-ratio: 4 / 3; }
+.home-models h3 { font: 500 var(--t-card)/1.3 var(--font-text); letter-spacing: -0.01em; }
+.home-models .tile:hover h3 { text-decoration: underline; text-underline-offset: 3px; }
+.home-models .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (min-width: 640px) and (max-width: 1023px) { .home-models > .span-4 { grid-column: span 6; } }
+/* điện thoại: hai cột ảnh + tên (6 thẻ xếp một cột cao gần 3.000 px) */
+@media (max-width: 639px) {
+  .home-models { row-gap: var(--s-6); }
+  .home-models > .span-4 { grid-column: span 6; }
+  .home-models .tile { gap: var(--s-2); }
+  .home-models h3 { font-size: 15px; line-height: 1.3; }
+  .home-models .tile__facts { margin-top: 0; font-size: 13px; }
+  .home-models .clamp { display: none; }
+}
+/* quy trình: bốn thẻ */
+.home-steps > .card { gap: var(--s-3); }
+.home-steps .step-num { margin-bottom: var(--s-3); }
+@media (min-width: 640px) and (max-width: 1023px) { .home-steps > .span-3 { grid-column: span 6; } }
+/* kiến thức: danh sách bài */
+.home-articles { display: grid; }
+.home-articles > li { border-bottom: 1px solid var(--line); }
+.home-articles a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s-2) var(--s-6); align-items: center; padding: var(--s-5) 0; }
+.home-articles > li:first-child a { padding-top: 0; }
+.home-articles h3 { font: 500 var(--t-card)/1.35 var(--font-text); letter-spacing: -0.01em; }
+.home-articles a:hover h3 { color: var(--action); }
+.home-articles p { grid-column: 1; color: var(--muted); font-size: var(--t-small); }
+.home-articles .link { grid-column: 2; grid-row: 1 / span 2; white-space: nowrap; }
+@media (max-width: 639px) { .home-articles a { grid-template-columns: minmax(0, 1fr); } .home-articles .link { grid-column: 1; grid-row: auto; justify-self: start; } }
+/* liên hệ trong phần kết: ba cách liên lạc cạnh nút */
+/* flex-wrap: ở 768 ba mục (email dài) không vừa một hàng thì xuống dòng thay vì tràn ngang */
+.home-contact { display: flex; flex-wrap: wrap; gap: var(--s-5) var(--s-8); margin: 0; }
+.home-contact > div { display: grid; gap: var(--s-2); min-width: 0; max-width: 100%; }
+.home-contact dt { font-size: var(--t-small); color: var(--muted); }
+.home-contact dd { margin: 0; font: var(--display-weight) var(--t-h3)/1.2 var(--font-display); letter-spacing: var(--display-tracking); }
+.home-contact a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.home-contact dd { overflow-wrap: anywhere; }
+@media (max-width: 639px) { .home-contact { flex-direction: column; gap: var(--s-4); } }
+
 /* picture-develops: ảnh của section, cột phải của split, cao bằng phần chữ bên cạnh */
 .develop { margin: 0; border-radius: var(--r-lg); overflow: hidden; height: min(640px, var(--ly-fit)); }
 .develop > img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -129,7 +213,7 @@ function vehicleHref(vehicles: Vehicle[], slug: string) {
   return vehicles.some((vehicle) => vehicle.slug === slug) ? `/xe/${slug}` : "/xe";
 }
 
-export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
+export function renderHome(vehicles: Vehicle[], fallback: Vehicle[], articles: Article[] = []) {
   const count = (category: string) => vehicles.filter((vehicle) => vehicle.category === category).length;
   const isuzu =
     vehicles.find((vehicle) => vehicle.slug === "xe-chua-chay-isuzu-4-khoi") ??
@@ -140,6 +224,10 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
   const href = (slug: string) => vehicleHref(vehicles, slug);
   // Dữ kiện cứng trên màn hình đầu (copy.md rule 2): số dòng xe thật đang hiển thị.
   const leadFact = vehicles.length > 0 ? `${vehicles.length} dòng xe trong 4 nhóm. ` : "";
+  const models = featuredVehicles(vehicles.length > 0 ? vehicles : fallback);
+  const latest = articles.slice(0, 3);
+  const navItem = (link: NavLink) => `<div class="nav__item"><a class="nav__link" href="${link.href}">${esc(link.label)}</a></div>`;
+  const menuLink = (link: NavLink) => `<a href="${link.href}">${esc(link.label)}<span>${esc(link.line ?? "")}</span></a>`;
 
   return `<!doctype html>
 <html lang="vi" data-type="product" data-radius="soft" data-buttons="solid" data-motion>
@@ -174,28 +262,23 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
 </head>
 <body>
 <!-- type: product · deal: hero film, nav nav-mega, close close-type, footer footer-dark, rhythm dark-band, buttons solid, mark wordmark, grounds none
-     moments: picture-develops (#cuu-ho) -->
+     moments: picture-develops (#cuu-ho). Nav và chân trang lấy từ app/components/site-nav.ts, giống các trang con. -->
 <header class="nav">
   <div class="wrap nav__bar">
     <a class="skip-link" href="#top">Bỏ qua điều hướng</a>
-    <a class="nav__logo" href="#top">Xe Chuyên Dụng</a>
+    <a class="nav__logo" href="/" aria-current="page">Xe Chuyên Dụng</a>
     <nav class="nav__links" aria-label="Điều hướng chính">
       <div class="nav__item">
-        <a class="nav__link" href="#dong-xe">Dòng xe ${chev}</a>
+        <a class="nav__link" href="/xe">Dòng xe ${chev}</a>
         <div class="nav__menu">
           <div class="wrap grid">
             <div class="menu-col span-3">
               <p class="t-label">Nhóm xe</p>
-              <a href="/xe">Xe tải<span>Chở hàng, gắn cẩu, đông lạnh</span></a>
-              <a href="/xe">Xe chữa cháy<span>Bồn nước và foam</span></a>
-              <a href="/xe">Xe cứu hộ<span>Sàn trượt, càng kéo</span></a>
-              <a href="/xe">Xe môi trường<span>Bồn nước, hút, ép, quét</span></a>
+              ${navGroups.map(menuLink).join("\n              ")}
             </div>
             <div class="menu-col span-3">
               <p class="t-label">Mẫu xe</p>
-              <a href="${href("xe-tai-gan-cau")}">FAW JH6 gắn cẩu<span>Cẩu Soosan 15 tấn, 8×4</span></a>
-              <a href="${href("xe-chua-chay-isuzu-4-khoi")}">Isuzu 4 khối<span>Nước 3,5 m³, foam 0,5 m³</span></a>
-              <a href="${href("xe-cuu-ho-san-truot")}">Cứu hộ sàn trượt<span>Cẩu, tời và càng kéo</span></a>
+              ${navModels.map(menuLink).join("\n              ")}
             </div>
             <a class="menu-card span-3 start-10" href="${href("xe-hut-chat-thai")}">
               <div class="panel">${img(fotonWaste, "Xe hút chất thải Foton 7 khối", "300px", "xe hút chất thải", ' class="frame__img" loading="lazy"')}</div>
@@ -205,12 +288,10 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
           </div>
         </div>
       </div>
-      <div class="nav__item"><a class="nav__link" href="#cau-hinh">Cấu hình</a></div>
-      <div class="nav__item"><a class="nav__link" href="#cuu-ho">Cứu hộ</a></div>
-      <div class="nav__item"><a class="nav__link" href="#thong-so">Thông số</a></div>
-      <div class="nav__item"><a class="nav__link" href="/tin-tuc">Kiến thức</a></div>
+      ${navLinks.map(navItem).join("\n      ")}
     </nav>
     <div class="nav__actions">
+      <a class="nav__link" href="tel:${PHONE}">${PHONE_LABEL}</a>
       <a class="btn btn--primary" href="${MAIN_HREF}">${MAIN_ACTION}</a>
     </div>
     <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Mở menu">
@@ -228,7 +309,10 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
           <div>
             <h1 id="hero-h">Xe tải và xe chuyên dụng cho doanh nghiệp</h1>
             <p class="hero__lead">${esc(leadFact)}Xe chữa cháy, cứu hộ, xe bồn và xe tải gắn cẩu, cấu hình theo việc xe sẽ làm. Thông số được đối chiếu với hồ sơ từng xe trước khi báo giá.</p>
-            <div class="btn-row"><a class="btn btn--primary" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a></div>
+            <div class="btn-row">
+              <a class="btn btn--primary" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a>
+              <a class="btn btn--secondary" href="tel:${PHONE}">Gọi ${PHONE_LABEL}</a>
+            </div>
           </div>
         </div>
       </div>
@@ -239,12 +323,12 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
     <div class="wrap">
       <div class="section-head section-head--row">
         <div><h2 id="dong-xe-h">Bốn nhóm xe. <span class="muted">Mỗi dòng có trang thông số riêng.</span></h2></div>
-        <a class="link" href="/xe">Xem toàn bộ danh mục</a>
+        <a class="link" href="/xe">Xem toàn bộ ${vehicles.length > 0 ? vehicles.length + " dòng xe" : "danh mục"}</a>
       </div>
       <div class="grid">
         ${groups
           .map(
-            (group) => `<a class="tile tile--portrait span-3" href="/xe">
+            (group) => `<a class="tile tile--portrait span-3" href="${group.href}">
           <div class="tile__media">${img(group.image, group.alt, "(max-width: 639px) 520px, 1000px", group.category, ` loading="lazy"${"pos" in group ? ` style="object-position: ${group.pos}"` : ""}`)}</div>
           <div class="tile__head"><h3>${esc(group.category)}</h3><span class="tile__price">${count(group.category)} dòng</span></div>
           <p>${esc(group.line)}</p>
@@ -254,6 +338,34 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
       </div>
     </div>
   </section>
+
+  ${
+    models.length > 0
+      ? `<section class="section ground-surface" id="mau-xe" aria-labelledby="mau-xe-h">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div>
+          <h2 id="mau-xe-h">Mẫu xe tiêu biểu</h2>
+          <p>Ảnh và thông tin tham khảo của từng mẫu; cấu hình thực tế được xác nhận theo hồ sơ xe.</p>
+        </div>
+        <a class="link" href="/xe">So sánh trong danh mục</a>
+      </div>
+      <ul class="grid home-models">
+        ${models
+          .map(
+            (vehicle) => `<li class="span-4"><a class="tile" href="/xe/${esc(vehicle.slug)}">
+          <div class="tile__media">${imgPath(vehicle.images[0], vehicle.name, "(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 420px", ' loading="lazy"')}</div>
+          <div class="tile__head"><h3>${esc(vehicle.name)}</h3></div>
+          <p class="tile__facts">${esc(vehicle.make)} · ${esc(vehicle.category)}</p>
+          <p class="clamp">${esc(vehicle.description)}</p>
+        </a></li>`,
+          )
+          .join("\n        ")}
+      </ul>
+    </div>
+  </section>`
+      : ""
+  }
 
   <section class="section" id="cau-hinh" aria-labelledby="cau-hinh-h">
     <div class="wrap">
@@ -289,7 +401,7 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
     </div>
   </section>
 
-  <section class="section" id="thong-so" style="--hm: 2" aria-labelledby="thong-so-h">
+  <section class="section" id="thong-so" aria-labelledby="thong-so-h">
     <div class="wrap grid grid--top">
       <div class="span-6">
         <div class="section-head">
@@ -304,6 +416,44 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
       <figure class="spec-photo span-6 start-7">${img(isuzuFireFront, "Xe chữa cháy Isuzu 4 khối nhìn thẳng từ phía trước", "(max-width: 1023px) 100vw, 628px", "xe chữa cháy Isuzu 4 khối", ' loading="lazy" style="object-position: 42% 50%"')}</figure>
     </div>
   </section>
+
+  <section class="section ground-surface" id="quy-trinh" aria-labelledby="quy-trinh-h">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div>
+          <h2 id="quy-trinh-h">Quy trình tư vấn bốn bước</h2>
+          <p>Từ việc xe sẽ làm đến phương án xe cụ thể. Phạm vi dịch vụ được xác nhận với doanh nghiệp trước khi đặt mua.</p>
+        </div>
+        <a class="link" href="/dich-vu">Chi tiết dịch vụ</a>
+      </div>
+      <ol class="grid home-steps">
+        ${serviceSteps
+          .map((step, index) => `<li class="card span-3"><span class="step-num">${index + 1}</span><h3>${esc(step.title)}</h3><p>${esc(step.description)}</p></li>`)
+          .join("\n        ")}
+      </ol>
+    </div>
+  </section>
+
+  ${
+    latest.length > 0
+      ? `<section class="section" id="kien-thuc" aria-labelledby="kien-thuc-h">
+    <div class="wrap grid grid--top">
+      <div class="span-4 section-head">
+        <h2 id="kien-thuc-h">Kiến thức chọn xe</h2>
+        <p>Câu hỏi nên chuẩn bị và thông tin cần kiểm tra trước khi xin báo giá.</p>
+        <p><a class="link" href="/tin-tuc">Tất cả bài viết</a></p>
+      </div>
+      <ol class="home-articles span-7 start-6">
+        ${latest
+          .map(
+            (article) => `<li><a href="/tin-tuc/${esc(article.slug)}"><h3>${esc(article.title)}</h3><p>${esc(article.category)} · ${esc(article.summary)}</p><span class="link">Đọc bài</span></a></li>`,
+          )
+          .join("\n        ")}
+      </ol>
+    </div>
+  </section>`
+      : ""
+  }
 </main>
 
 <footer class="footer closing footer--dark ground-inverse" id="contact" aria-labelledby="close-h">
@@ -313,18 +463,23 @@ export function renderHome(vehicles: Vehicle[], fallback: Vehicle[]) {
         <h2 id="close-h">${MAIN_ACTION}</h2>
         <p>Ghi dòng xe, công việc và nơi xe chạy. Hai bên làm rõ cấu hình rồi mới xác nhận báo giá.</p>
       </div>
-      <a class="btn btn--primary btn--xl btn--wide" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a>
+      <dl class="home-contact">
+        <div><dt>Người liên hệ</dt><dd>${esc(CONTACT_NAME)}</dd></div>
+        <div><dt>Điện thoại</dt><dd><a href="tel:${PHONE}">${PHONE_LABEL}</a></dd></div>
+        <div><dt>Email</dt><dd><a href="mailto:${EMAIL}">${EMAIL}</a></dd></div>
+      </dl>
+      <a class="btn btn--primary btn--xl" href="${MAIN_HREF}">${MAIN_ACTION}${arrow}</a>
     </div>
     <div class="closing__links">
       <div class="grid">
         <div class="span-4 stack-4">
-          <a class="nav__logo" href="#top">Xe Chuyên Dụng</a>
-          <p class="footer__lede">Tư vấn xe tải và xe chuyên dụng theo công việc, hỗ trợ khách hàng toàn quốc.</p>
+          <a class="nav__logo" href="/">Xe Chuyên Dụng</a>
+          <p class="footer__lede">${esc(FOOTER_LEDE)}</p>
         </div>
-        <div class="span-2 footer__col"><h3>Danh mục</h3><ul><li><a href="#dong-xe">Nhóm xe</a></li><li><a href="#cau-hinh">Xe gắn cẩu</a></li><li><a href="#cuu-ho">Xe cứu hộ</a></li><li><a href="#thong-so">Xe chữa cháy</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Thông tin</h3><ul><li><a href="/gioi-thieu">Giới thiệu</a></li><li><a href="/dich-vu">Dịch vụ</a></li><li><a href="/tu-van-mua-xe">Tư vấn mua xe</a></li><li><a href="/tin-tuc">Kiến thức</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Pháp lý</h3><ul><li><a href="/chinh-sach">Chính sách</a></li><li><a href="/phap-ly">Quy định</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Liên hệ</h3><ul><li><span>Phước Nguyễn</span></li><li><a href="tel:${PHONE}">${PHONE_LABEL}</a></li><li><a href="mailto:${EMAIL}">Gửi email</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Danh mục</h3><ul>${links(navGroups)}</ul></div>
+        <div class="span-2 footer__col"><h3>Thông tin</h3><ul>${links(footerInfo)}</ul></div>
+        <div class="span-2 footer__col"><h3>Pháp lý</h3><ul>${links(footerLegal)}</ul></div>
+        <div class="span-2 footer__col"><h3>Liên hệ</h3><ul><li><span>${esc(CONTACT_NAME)}</span></li><li><a href="tel:${PHONE}">${PHONE_LABEL}</a></li><li><a href="mailto:${EMAIL}">Gửi email</a></li></ul></div>
       </div>
       <div class="footer__legal"><span>&copy; 2026 Xe Chuyên Dụng</span></div>
     </div>

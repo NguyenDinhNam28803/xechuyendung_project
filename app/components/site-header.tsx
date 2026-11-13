@@ -3,32 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { MAIN_ACTION, MAIN_HREF, PHONE, PHONE_LABEL } from "./site-constants";
+import { navGroups as groups, navLinks as links, navModels as models } from "./site-nav";
 
 /*
  * Thanh điều hướng theo kit (nav-mega, giống trang chủ): menu rê chuột trên máy tính là CSS của kit;
  * component này làm phần system.js làm ở trang chủ: tấm menu toàn màn hình trên điện thoại,
  * accordion, phím Escape, aria-expanded, và đóng tấm menu sau khi bấm một liên kết.
+ * Mục menu lấy từ site-nav.ts, cùng nguồn với trang chủ (app/_home/document.ts).
  */
-
-const groups = [
-  { href: "/xe?loai=xe-tai", label: "Xe tải", line: "Chở hàng, gắn cẩu, đông lạnh" },
-  { href: "/xe?loai=xe-chua-chay", label: "Xe chữa cháy", line: "Bồn nước và foam" },
-  { href: "/xe?loai=xe-cuu-ho", label: "Xe cứu hộ", line: "Sàn trượt, càng kéo" },
-  { href: "/xe?loai=xe-bon-moi-truong", label: "Xe môi trường", line: "Bồn nước, hút, ép, quét" },
-];
-
-const models = [
-  { href: "/xe/xe-tai-gan-cau", label: "FAW JH6 gắn cẩu", line: "Cẩu Soosan 15 tấn, 8×4" },
-  { href: "/xe/xe-chua-chay-isuzu-4-khoi", label: "Isuzu 4 khối", line: "Nước 3,5 m³, foam 0,5 m³" },
-  { href: "/xe/xe-cuu-ho-san-truot", label: "Cứu hộ sàn trượt", line: "Cẩu, tời và càng kéo" },
-];
-
-const links = [
-  { href: "/dich-vu", label: "Dịch vụ" },
-  { href: "/tu-van-mua-xe", label: "Tư vấn mua xe" },
-  { href: "/tin-tuc", label: "Kiến thức" },
-  { href: "/gioi-thieu", label: "Giới thiệu" },
-];
 
 function isCurrent(current: string | undefined, href: string) {
   return current === href;

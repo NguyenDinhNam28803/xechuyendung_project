@@ -5,23 +5,22 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { contactVehicleCategories, getVehicleBySlug } from "../data/vehicles";
 
+type Status = { kind: "idle" | "sending" | "sent" | "error"; message: string };
+
 export default function ContactForm() {
-  const [feedback, setFeedback] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [status, setStatus] = useState<Status>({ kind: "idle", message: "" });
   const searchParams = useSearchParams();
   const vehicleSlug = searchParams.get("xe") ?? "";
   const vehicle = getVehicleBySlug(vehicleSlug);
+  const isSubmitting = status.kind === "sending";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSubmitting) return;
-
-    setIsSubmitting(true);
-    setFeedback("");
-    setIsSuccess(false);
-
     const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    setStatus({ kind: "sending", message: "Đang gửi yêu cầu…" });
     const formData = new FormData(form);
 
     try {
@@ -39,167 +38,105 @@ export default function ContactForm() {
           consent: formData.get("consent") === "on",
         }),
       });
-      const result: { error?: string } = await response.json();
-
+      const result: { error?: string } = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(
-          result.error ?? "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.",
-        );
+        throw new Error(result.error ?? "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.");
       }
-
       form.reset();
-      setIsSuccess(true);
-      setFeedback("Yêu cầu đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm.");
+      setStatus({ kind: "sent", message: "Đã nhận yêu cầu. Bên tư vấn sẽ gọi lại theo số điện thoại bạn để lại." });
     } catch (error) {
-      setFeedback(
-        error instanceof Error
-          ? error.message
-          : "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.",
-      );
-    } finally {
-      setIsSubmitting(false);
+      setStatus({
+        kind: "error",
+        message: error instanceof Error ? error.message : "Không thể gửi yêu cầu lúc này. Vui lòng thử lại.",
+      });
     }
   }
 
   return (
-    <div className="contact-form-panel">
-      <div className="form-heading">
-        <div>
-          <span className="form-eyebrow">YÊU CẦU TƯ VẤN</span>
-          <h2>Chia sẻ nhu cầu của bạn</h2>
-        </div>
-        <span className="form-required">
-          <i /> Trường bắt buộc
-        </span>
-      </div>
-
-      <div className="form-demo-notice">
-        <span aria-hidden="true">i</span>
-        <p>
-          <strong>Gửi yêu cầu qua biểu mẫu này.</strong> Hệ thống sẽ thông báo
-          rõ nếu tiếp nhận thành công hoặc chưa thể xử lý. Bạn cũng có thể liên
-          hệ trực tiếp qua số điện thoại và email bên cạnh.
-        </p>
+    <div className="card pg-form-card">
+      <div className="section-head pg-form-card__head">
+        <h2 id="form-h">Yêu cầu tư vấn</h2>
+        <p className="t-small muted">Trường có dấu * là bắt buộc. Không nhập thông tin nhạy cảm.</p>
       </div>
 
       {vehicle && (
-        <div className="contact-form-vehicle">
-          <span>XE ĐANG QUAN TÂM</span>
-          <strong>{vehicle.name}</strong>
-        </div>
+        <p className="pill pg-form-vehicle">
+          <span className="muted">Xe đang quan tâm:</span> {vehicle.name}
+        </p>
       )}
 
       <form
-        className="contact-form"
+        aria-labelledby="form-h"
+        className="form"
         onChange={() => {
-          setFeedback("");
-          setIsSuccess(false);
+          if (status.kind === "sent" || status.kind === "error") setStatus({ kind: "idle", message: "" });
         }}
         onSubmit={handleSubmit}
       >
-        <div className="contact-form-honeypot" aria-hidden="true">
+        <div className="pg-honeypot" aria-hidden="true">
           <label htmlFor="contact-company-website">Website công ty</label>
-          <input
-            autoComplete="off"
-            id="contact-company-website"
-            name="companyWebsite"
-            tabIndex={-1}
-          />
+          <input autoComplete="off" id="contact-company-website" name="companyWebsite" tabIndex={-1} />
         </div>
-        <div className="form-field">
-          <label htmlFor="contact-name">
-            Họ và tên <span>*</span>
-          </label>
-          <input
-            autoComplete="name"
-            id="contact-name"
-            maxLength={100}
-            name="name"
-            placeholder="Nhập họ và tên"
-            required
-          />
-        </div>
-        <div className="form-field">
-          <label htmlFor="contact-phone">
-            Số điện thoại <span>*</span>
-          </label>
+        <label className="field" htmlFor="contact-name">
+          Họ và tên *
+          <input autoComplete="name" id="contact-name" maxLength={100} name="name" required />
+        </label>
+        <label className="field" htmlFor="contact-phone">
+          Số điện thoại *
           <input
             autoComplete="tel"
             id="contact-phone"
             inputMode="tel"
             maxLength={20}
             name="phone"
-            placeholder="Ví dụ: 0901 234 567"
+            placeholder="0901 234 567"
             required
             type="tel"
           />
-        </div>
-        <div className="form-field">
-          <label htmlFor="contact-category">
-            Dòng xe quan tâm <span>*</span>
-          </label>
-          <select
-            defaultValue={vehicle?.category ?? ""}
-            id="contact-category"
-            name="category"
-            required
-          >
-            <option disabled value="">
-              Chọn dòng xe
-            </option>
+        </label>
+        <label className="field" htmlFor="contact-category">
+          Dòng xe quan tâm *
+          <select defaultValue={vehicle?.category ?? ""} id="contact-category" name="category" required>
+            <option disabled value="">Chọn dòng xe</option>
             {contactVehicleCategories.map((option) => (
               <option key={option}>{option}</option>
             ))}
           </select>
-        </div>
-        <div className="form-field">
-          <label htmlFor="contact-location">Tỉnh / thành phố</label>
-          <input
-            autoComplete="address-level1"
-            id="contact-location"
-            maxLength={80}
-            name="location"
-            placeholder="Địa điểm dự kiến nhận xe"
-          />
-        </div>
-        <div className="form-field form-field-full">
-          <label htmlFor="contact-message">Nhu cầu của bạn</label>
+        </label>
+        <label className="field" htmlFor="contact-location">
+          Tỉnh / thành phố nhận xe
+          <input autoComplete="address-level1" id="contact-location" maxLength={80} name="location" />
+        </label>
+        <label className="field field--full" htmlFor="contact-message">
+          Nhu cầu
           <textarea
             id="contact-message"
             maxLength={1000}
             name="message"
-            placeholder="Mô tả công việc, tải trọng hoặc cấu hình bạn đang tìm..."
+            placeholder="Công việc của xe, tải trọng hoặc dung tích, cấu hình đang tìm"
             rows={4}
           />
-        </div>
-        <div className="form-consent">
+        </label>
+        <div className="field--full pg-consent">
           <input id="contact-consent" name="consent" required type="checkbox" />
           <label htmlFor="contact-consent">
-            Tôi đồng ý để đơn vị lưu thông tin liên hệ trong hệ thống và sử dụng
-            thông tin này để phản hồi yêu cầu tư vấn. Tôi đã xem{" "}
-            <Link href="/chinh-sach">thông tin quyền riêng tư</Link>.
+            Tôi đồng ý để đơn vị lưu thông tin liên hệ và dùng thông tin này để phản hồi yêu cầu tư vấn. Tôi đã xem{" "}
+            <Link className="pg-inline-link" href="/chinh-sach">thông tin quyền riêng tư</Link>.
           </label>
         </div>
-        <div className="form-submit-row">
-          <p>Không nhập thông tin nhạy cảm.</p>
-          <button
-            className="button button-primary"
-            disabled={isSubmitting}
-            type="submit"
-          >
-            {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}{" "}
-            <span aria-hidden="true">→</span>
+        <div className="btn-row">
+          <button className="btn btn--primary" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Đang gửi…" : "Gửi yêu cầu"}
           </button>
         </div>
-        {feedback && (
-          <p
-            className={`form-feedback${isSuccess ? " form-feedback-success" : " form-feedback-error"}`}
-            role="status"
-            aria-live="polite"
-          >
-            {feedback}
-          </p>
-        )}
+        <p
+          aria-live="polite"
+          className="form__status"
+          data-state={status.kind}
+          role="status"
+        >
+          {status.message}
+        </p>
       </form>
     </div>
   );

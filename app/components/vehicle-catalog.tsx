@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import ContentImage from "./content-image";
+import KitImage from "./kit-image";
 import VehicleArtwork from "./vehicle-artwork";
 import {
   vehicleCategories,
@@ -18,7 +18,7 @@ type CatalogCategory = "Tất cả" | VehicleCategory;
 function normalize(value: string) {
   return value
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[đĐ]/g, "d")
     .toLocaleLowerCase("vi");
 }
@@ -52,8 +52,7 @@ function VehicleCatalogContent({
   const filteredVehicles = useMemo(() => {
     const query = normalize(search.trim());
     return vehicles.filter((vehicle) => {
-      const matchesCategory =
-        activeCategory === "Tất cả" || vehicle.category === activeCategory;
+      const matchesCategory = activeCategory === "Tất cả" || vehicle.category === activeCategory;
       const matchesSearch =
         !query ||
         normalize(
@@ -71,6 +70,9 @@ function VehicleCatalogContent({
     });
   }, [activeCategory, search, vehicles]);
 
+  const countOf = (category: CatalogCategory) =>
+    category === "Tất cả" ? vehicles.length : vehicles.filter((vehicle) => vehicle.category === category).length;
+
   function toggleComparedVehicle(slug: string) {
     setComparedSlugs((current) => {
       if (current.includes(slug)) return current.filter((item) => item !== slug);
@@ -81,152 +83,141 @@ function VehicleCatalogContent({
 
   return (
     <>
-      <div className="catalog-controls" id="danh-muc">
-        <div className="catalog-title">
-          <strong>XE THEO NHU CẦU</strong>
-          <span aria-atomic="true" aria-live="polite">{filteredVehicles.length} dòng xe</span>
-        </div>
-        <div className="catalog-tools">
-          <div className="category-tabs" role="group" aria-label="Lọc theo danh mục">
-            {vehicleCategories.map((category) => (
-              <button
-                aria-pressed={activeCategory === category}
-                className={activeCategory === category ? "category-tab selected" : "category-tab"}
-                key={category}
-                onClick={() => setActiveCategory(category)}
-                type="button"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-          <label className="search-box">
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
-              <circle cx="8.8" cy="8.8" r="5.6" stroke="currentColor" strokeWidth="1.6" />
-              <path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-            <input
-              aria-label="Tìm kiếm xe"
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Tìm xe, hãng, công năng..."
-              type="search"
-              value={search}
-            />
-          </label>
-        </div>
-      </div>
-
-      {filteredVehicles.length > 0 ? (
-        <div className="vehicle-grid">
-          {filteredVehicles.map((vehicle) => (
-            <article className="vehicle-card" key={vehicle.slug}>
-              <Link className={`card-image card-image-${vehicle.artwork}`} href={`/xe/${vehicle.slug}`} aria-label={`Xem ${vehicle.name}`}>
-                <span className="vehicle-badge"><i />{vehicle.badge}</span>
-                {vehicle.images[0] ? (
-                  <ContentImage
-                    alt={vehicle.name}
-                    className="card-photo"
-                    fill
-                    sizes="(max-width: 760px) 100vw, 33vw"
-                    src={vehicle.images[0]}
-                  />
-                ) : (
-                  <VehicleArtwork kind={vehicle.artwork} />
-                )}
-                <span className="card-open" aria-hidden="true">↗</span>
-              </Link>
-              <div className="card-details">
-                <span className="vehicle-type">{vehicle.make} · {vehicle.category}</span>
-                <h2><Link href={`/xe/${vehicle.slug}`}>{vehicle.name}</Link></h2>
-                <p>{vehicle.description}</p>
-                <button
-                  aria-pressed={comparedSlugs.includes(vehicle.slug)}
-                  className="vehicle-compare-toggle"
-                  disabled={
-                    !comparedSlugs.includes(vehicle.slug) &&
-                    comparedSlugs.length >= maximumComparedVehicles
-                  }
-                  onClick={() => toggleComparedVehicle(vehicle.slug)}
-                  type="button"
-                >
-                  {comparedSlugs.includes(vehicle.slug) ? "Đã chọn so sánh" : "Chọn so sánh"}
-                </button>
-                <div className="card-footer">
-                  <Link href={`/lien-he?xe=${vehicle.slug}#contact-form`}>Yêu cầu tư vấn</Link>
-                  <Link href={`/xe/${vehicle.slug}`}>Xem chi tiết <span aria-hidden="true">→</span></Link>
-                </div>
-              </div>
-            </article>
+      <div className="pg-filters" id="danh-muc">
+        <div className="tabs" role="group" aria-label="Lọc theo nhóm xe">
+          {vehicleCategories.map((category) => (
+            <button
+              aria-pressed={activeCategory === category}
+              className="tab"
+              key={category}
+              onClick={() => setActiveCategory(category)}
+              type="button"
+            >
+              {category} <span className="pg-count">{countOf(category)}</span>
+            </button>
           ))}
         </div>
+        <label className="field pg-search">
+          <span className="sr-only">Tìm kiếm xe</span>
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+            <circle cx="8.8" cy="8.8" r="5.6" stroke="currentColor" strokeWidth="1.6" />
+            <path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tìm theo tên xe, hãng, công năng"
+            type="search"
+            value={search}
+          />
+        </label>
+      </div>
+      <p className="pg-result t-small muted" aria-live="polite" aria-atomic="true">
+        {filteredVehicles.length} dòng xe{activeCategory !== "Tất cả" ? ` trong nhóm ${activeCategory}` : ""}
+      </p>
+
+      {filteredVehicles.length > 0 ? (
+        <ul className="grid pg-vehicles">
+          {filteredVehicles.map((vehicle) => {
+            const compared = comparedSlugs.includes(vehicle.slug);
+            return (
+              <li className="span-4 pg-vehicle" key={vehicle.slug}>
+                <Link className="tile" href={`/xe/${vehicle.slug}`}>
+                  <div className="tile__media">
+                    {vehicle.images[0] ? (
+                      <KitImage
+                        alt={vehicle.name}
+                        loading="lazy"
+                        maxWidth={1080}
+                        sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 420px"
+                        src={vehicle.images[0]}
+                      />
+                    ) : (
+                      <div className="pg-artwork"><VehicleArtwork kind={vehicle.artwork} /></div>
+                    )}
+                  </div>
+                  <div className="tile__head">
+                    <h2 className="pg-tile-title">{vehicle.name}</h2>
+                  </div>
+                  <p className="tile__facts">{vehicle.make} · {vehicle.category}</p>
+                  <p className="pg-clamp">{vehicle.description}</p>
+                </Link>
+                <div className="pg-vehicle__actions">
+                  <button
+                    aria-pressed={compared}
+                    className="btn btn--secondary btn--sm"
+                    disabled={!compared && comparedSlugs.length >= maximumComparedVehicles}
+                    onClick={() => toggleComparedVehicle(vehicle.slug)}
+                    type="button"
+                  >
+                    {compared ? "✓ Đã chọn so sánh" : "Chọn so sánh"}
+                  </button>
+                  <Link className="link" href={`/lien-he?xe=${vehicle.slug}#contact-form`}>Hỏi về xe này</Link>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       ) : (
-        <div className="empty-state">
-          Không tìm thấy dòng xe phù hợp. Thử từ khóa khác hoặc chọn “Tất cả”.
+        <div className="card pg-empty">
+          <h3>Không có dòng xe khớp bộ lọc</h3>
+          <p>Thử từ khóa khác hoặc chọn nhóm “Tất cả”.</p>
         </div>
       )}
-      <p className="catalog-disclaimer">
+      <p className="pg-note t-small muted">
         Danh mục gồm thông tin mẫu và thông tin tham khảo từ nguồn bên ngoài. Hãy xác nhận cấu hình, tình trạng xe, giá bán và thời gian giao trước khi quyết định.
       </p>
 
       {comparedVehicles.length > 0 && (
-        <aside className="vehicle-compare-bar" aria-label="Danh sách xe đang chọn so sánh">
-          <div className="vehicle-compare-summary">
-            <strong aria-live="polite">
-              Đã chọn {comparedVehicles.length}/{maximumComparedVehicles} xe
-            </strong>
-            <span>{comparedVehicles.map((vehicle) => vehicle.name).join(" · ")}</span>
-          </div>
-          <div className="vehicle-compare-actions">
-            <button
-              className="button button-primary"
-              disabled={comparedVehicles.length < 2}
-              onClick={() => comparisonDialog.current?.showModal()}
-              type="button"
-            >
-              So sánh xe
-            </button>
-            <button
-              className="vehicle-compare-clear"
-              onClick={() => setComparedSlugs([])}
-              type="button"
-            >
-              Xóa lựa chọn
-            </button>
+        <aside className="pg-compare-bar ground-inverse" aria-label="Danh sách xe đang chọn so sánh">
+          <div className="wrap pg-compare-bar__in">
+            <div className="pg-compare-bar__text">
+              <strong aria-live="polite">Đã chọn {comparedVehicles.length}/{maximumComparedVehicles} xe</strong>
+              <span>{comparedVehicles.map((vehicle) => vehicle.name).join(" · ")}</span>
+            </div>
+            <div className="btn-row">
+              <button className="btn btn--secondary btn--sm" onClick={() => setComparedSlugs([])} type="button">
+                Xóa lựa chọn
+              </button>
+              <button
+                className="btn btn--primary btn--sm"
+                disabled={comparedVehicles.length < 2}
+                onClick={() => comparisonDialog.current?.showModal()}
+                type="button"
+              >
+                {comparedVehicles.length < 2 ? "Chọn thêm 1 xe để so sánh" : "So sánh xe"}
+              </button>
+            </div>
           </div>
         </aside>
       )}
 
       <dialog
         aria-labelledby="vehicle-comparison-title"
-        className="vehicle-comparison-dialog"
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            comparisonDialog.current?.close();
-          }
+        className="pg-dialog"
+        onClick={(event) => {
+          // Bấm vào nền mờ bên ngoài hộp thoại thì đóng.
+          if (event.target === event.currentTarget) comparisonDialog.current?.close();
         }}
         ref={comparisonDialog}
       >
-        <div className="vehicle-comparison-heading">
-          <div>
-            <span className="section-kicker">ĐỐI CHIẾU DANH MỤC</span>
+        <div className="pg-dialog__head">
+          <div className="section-head">
             <h2 id="vehicle-comparison-title">So sánh xe đã chọn</h2>
+            <p className="t-small">
+              Đối chiếu thông tin tham khảo hiện có, không phải bảng thông số đã xác minh. Xác nhận cấu hình và hồ sơ từng xe trước khi quyết định.
+            </p>
           </div>
           <button
             aria-label="Đóng bảng so sánh"
-            className="vehicle-comparison-close"
+            className="nav__toggle pg-dialog__close"
             onClick={() => comparisonDialog.current?.close()}
             type="button"
           >
-            ×
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           </button>
         </div>
-        <p className="vehicle-comparison-note">
-          Đây là đối chiếu thông tin tham khảo hiện có, không phải bảng thông số kỹ thuật đã xác minh.
-          Vui lòng xác nhận cấu hình và hồ sơ của từng xe trước khi quyết định.
-        </p>
-        <div className="vehicle-comparison-table-wrap">
-          <table className="vehicle-comparison-table">
+        <div className="pg-table-wrap">
+          <table className="pg-table">
             <thead>
               <tr>
                 <th scope="col">Tiêu chí</th>
@@ -250,14 +241,14 @@ function VehicleCatalogContent({
                   <td key={vehicle.slug}>
                     <ul>
                       {vehicle.knownDetails.map((detail) => (
-                        <li key={detail.label}><strong>{detail.label}:</strong> {detail.value}</li>
+                        <li key={detail.label}><span className="muted">{detail.label}:</span> {detail.value}</li>
                       ))}
                     </ul>
                   </td>
                 ))}
               </tr>
               <tr>
-                <th scope="row">Mục đích tham khảo</th>
+                <th scope="row">Mục đích sử dụng</th>
                 {comparedVehicles.map((vehicle) => <td key={vehicle.slug}>{vehicle.useCase}</td>)}
               </tr>
               <tr>
@@ -273,13 +264,9 @@ function VehicleCatalogContent({
             </tbody>
           </table>
         </div>
-        <div className="vehicle-comparison-footer">
-          <span>Chọn tối đa {maximumComparedVehicles} xe để dễ đối chiếu.</span>
-          <button
-            className="button button-primary"
-            onClick={() => comparisonDialog.current?.close()}
-            type="button"
-          >
+        <div className="pg-dialog__foot">
+          <span className="t-small muted">Chọn tối đa {maximumComparedVehicles} xe để dễ đối chiếu.</span>
+          <button className="btn btn--primary" onClick={() => comparisonDialog.current?.close()} type="button">
             Đóng bảng so sánh
           </button>
         </div>

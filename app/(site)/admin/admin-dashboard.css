@@ -1,0 +1,719 @@
+/*
+ * Dashboard, biểu đồ và bảng dữ liệu dùng chung (dashboard v2).
+ *
+ * Màu series: bảng màu phân loại đã kiểm định (thứ tự cố định, an toàn cho
+ * người mù màu trên các cặp liền kề) — chạy lại validate_palette khi đổi màu.
+ * Slot 3/4/5 có tương phản < 3:1 với nền trắng → luôn kèm chú giải có số và
+ * nút "Xem dạng bảng".
+ */
+.admin-shell {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --chart-grid: #e1e0d9;
+  --chart-axis: #c3c2b7;
+  --chart-ink: #19354a;
+  --chart-ink-muted: #6b7378;
+  --chart-surface: #ffffff;
+  --good-ink: #006300;
+  --bad-ink: #a3312c;
+}
+
+/* ---------- Bố cục dashboard ---------- */
+.admin-dashboard {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-dashboard .admin-attention {
+  margin-bottom: 0;
+}
+
+.admin-dashboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.admin-dashboard-filters h2 {
+  margin: 0;
+  color: var(--chart-ink);
+  font-size: 17px;
+}
+
+.admin-dashboard-filters p {
+  margin: 4px 0 0;
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+}
+
+.admin-range-picker {
+  margin-bottom: 0;
+}
+
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  transition: opacity 120ms ease;
+}
+
+.admin-stat-grid.is-loading,
+.admin-chart-grid:has(.admin-chart-placeholder) {
+  opacity: 0.75;
+}
+
+.admin-stat-tile {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 6px;
+  border: 1px solid #e5eaec;
+  border-radius: 11px;
+  background: var(--chart-surface);
+  padding: 16px;
+  color: var(--chart-ink);
+  text-decoration: none;
+}
+
+a.admin-stat-tile:hover {
+  border-color: #c6d6de;
+  box-shadow: 0 9px 22px rgb(18 43 62 / 6%);
+}
+
+.admin-stat-label {
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-stat-value {
+  font-size: 28px;
+  font-weight: 650;
+  line-height: 1.1;
+}
+
+.admin-stat-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-stat-delta.is-good {
+  color: var(--good-ink);
+}
+
+.admin-stat-delta.is-bad {
+  color: var(--bad-ink);
+}
+
+.admin-stat-delta.is-neutral {
+  color: var(--chart-ink-muted);
+  font-weight: 500;
+}
+
+.admin-stat-hint {
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.admin-sparkline {
+  margin-top: 4px;
+  overflow: visible;
+}
+
+.admin-sparkline polyline {
+  fill: none;
+  stroke: #9aa7ae;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.admin-sparkline circle {
+  fill: var(--series-1);
+  stroke: var(--chart-surface);
+  stroke-width: 2;
+}
+
+.admin-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-chart-grid-wide {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+/* ---------- Thẻ biểu đồ ---------- */
+.admin-chart-card {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+}
+
+.admin-chart-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-chart-header h2 {
+  margin: 0;
+  color: var(--chart-ink);
+  font-size: 15px;
+}
+
+.admin-chart-header p {
+  margin: 4px 0 0;
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-chart-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-link-button {
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: #9a6211;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-link-button:hover {
+  text-decoration: underline;
+}
+
+.admin-chart {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+}
+
+.admin-chart svg {
+  display: block;
+  overflow: visible;
+}
+
+.admin-chart svg:focus-visible {
+  outline: 2px solid #efa72f;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+line.admin-chart-gridline {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+line.admin-chart-baseline {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.admin-chart-tick {
+  fill: var(--chart-ink-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-chart-hover-band {
+  fill: rgb(25 53 74 / 6%);
+}
+
+.admin-chart-tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  min-width: 170px;
+  gap: 4px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(11 11 11 / 10%);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  box-shadow: 0 10px 24px rgb(18 43 62 / 14%);
+  color: var(--chart-ink);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.admin-chart-tooltip strong {
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+.admin-chart-tooltip-total {
+  margin-bottom: 2px;
+  color: var(--chart-ink-muted);
+}
+
+.admin-chart-tooltip span:not(.admin-chart-tooltip-total) {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.admin-chart-tooltip i,
+.admin-segment-values i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+.admin-chart-tooltip b {
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: #4a5a63;
+  font-size: 12px;
+}
+
+.admin-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-chart-legend strong {
+  color: var(--chart-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.admin-chart-placeholder {
+  min-height: 240px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f3f6f7 0%, #fafbfb 50%, #f3f6f7 100%);
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.4s ease-in-out infinite;
+}
+
+.admin-chart-placeholder.is-short {
+  min-height: 160px;
+}
+
+.admin-chart-footnote {
+  margin: 12px 0 0;
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.admin-chart-table {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.admin-compact-table {
+  min-width: 0 !important;
+}
+
+.admin-compact-table th,
+.admin-compact-table td {
+  padding: 8px 10px;
+}
+
+.admin-numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Thanh ngang ---------- */
+.admin-bar-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-bar-list li {
+  display: grid;
+  grid-template-columns: minmax(90px, 38%) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.admin-bar-label {
+  overflow: hidden;
+  color: #344c5b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bar-track {
+  display: block;
+  height: 14px;
+}
+
+.admin-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.admin-bar-value {
+  min-width: 28px;
+  color: var(--chart-ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Thanh tỷ lệ công khai / nháp ---------- */
+.admin-segment-list {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-segment {
+  display: grid;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--chart-ink);
+  text-decoration: none;
+}
+
+a.admin-segment:hover {
+  background: #f6f9fa;
+}
+
+.admin-segment-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-segment-bar {
+  display: flex;
+  height: 10px;
+  gap: 2px;
+}
+
+.admin-segment-bar > span {
+  min-width: 4px;
+  border-radius: 3px;
+}
+
+.admin-segment-empty {
+  flex: 1;
+  background: var(--chart-grid);
+}
+
+.admin-segment-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--chart-ink-muted);
+  font-size: 12px;
+}
+
+.admin-segment-values > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ---------- Bảng dữ liệu ---------- */
+.admin-table-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-page-size {
+  display: inline-flex !important;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 6px !important;
+  color: #657077 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.admin-page-size select {
+  width: auto !important;
+  padding: 5px 8px !important;
+  font-size: 12px;
+}
+
+.admin-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.admin-sort-button:hover,
+.admin-sort-button.is-active {
+  color: #19354a;
+}
+
+.admin-sort-indicator {
+  color: #a3adb2;
+  font-size: 10px;
+}
+
+.admin-sort-button.is-active .admin-sort-indicator {
+  color: #9a6211;
+}
+
+.admin-select-cell {
+  width: 36px;
+  padding-right: 0 !important;
+}
+
+.admin-select-cell input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.admin-data-table tbody tr.is-selected {
+  background: #fff8ec;
+}
+
+.admin-nowrap {
+  white-space: nowrap;
+}
+
+.admin-bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+  border: 1px solid #f1d9ae;
+  border-radius: 9px;
+  background: #fff8ec;
+  padding: 10px 12px;
+  color: #19354a;
+  font-size: 13px;
+}
+
+.admin-bulk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-bulk-bar .admin-link-button {
+  margin-left: auto;
+}
+
+.admin-publish-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  background: none;
+  padding: 2px 0;
+  color: #94600f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-publish-switch.is-published {
+  color: #276343;
+}
+
+.admin-publish-switch:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.admin-publish-switch-track {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: #e4d3b6;
+  transition: background 120ms ease;
+}
+
+.admin-publish-switch.is-published .admin-publish-switch-track {
+  background: #3f9a67;
+}
+
+.admin-publish-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 20%);
+  transition: transform 120ms ease;
+}
+
+.admin-publish-switch.is-published .admin-publish-switch-thumb {
+  transform: translateX(12px);
+}
+
+.admin-publish-switch:focus-visible {
+  outline: 2px solid #efa72f;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.admin-skeleton {
+  display: block;
+  width: 70%;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #eef2f3 0%, #f8fafa 50%, #eef2f3 100%);
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.4s ease-in-out infinite;
+}
+
+.admin-skeleton.is-large {
+  width: 45%;
+  height: 26px;
+}
+
+@keyframes admin-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-skeleton,
+  .admin-chart-placeholder {
+    animation: none;
+  }
+}
+
+/* ---------- Phiên đăng nhập & bộ lọc lịch sử ---------- */
+.admin-session-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-session-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 14px;
+  border: 1px solid #e6ebed;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.admin-session-list li.is-current {
+  border-color: #b9dcc7;
+  background: #f3faf6;
+}
+
+.admin-session-list small {
+  display: block;
+  margin-top: 3px;
+  color: #667076;
+  font-size: 12px;
+}
+
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 12px;
+}
+
+.admin-filter-row label {
+  min-width: 150px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-chart-grid,
+  .admin-chart-grid-wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-chart-header {
+    flex-direction: column;
+  }
+
+  .admin-bar-list li {
+    grid-template-columns: minmax(80px, 40%) minmax(0, 1fr) auto;
+  }
+}
+
+.admin-account + .admin-account {
+  margin-top: 16px;
+}
+
+.admin-session-panel {
+  display: grid;
+  gap: 14px;
+}

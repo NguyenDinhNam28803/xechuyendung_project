@@ -13,6 +13,39 @@ export function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+/** Số đếm theo kiểu Việt Nam: 1.284 — rút gọn 12,9 N khi từ 10.000. */
+export function formatCount(value: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    notation: value >= 10_000 ? "compact" : "standard",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+/** Ngày ngắn cho trục biểu đồ: "14/11". `day` dạng YYYY-MM-DD. */
+export function formatShortDay(day: string) {
+  const [, month, date] = day.split("-");
+  return `${Number(date)}/${Number(month)}`;
+}
+
+/** Ngày đầy đủ cho tooltip: "Thứ Sáu, 14/11/2026". */
+export function formatLongDay(day: string) {
+  return new Intl.DateTimeFormat("vi-VN", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${day}T00:00:00Z`));
+}
+
+/** "3,5 giờ" / "45 phút" / "2,1 ngày" cho thời gian phản hồi. */
+export function formatHours(hours: number | null | undefined) {
+  if (hours === null || hours === undefined) return "—";
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} phút`;
+  if (hours < 48) return `${hours.toLocaleString("vi-VN", { maximumFractionDigits: 1 })} giờ`;
+  return `${(hours / 24).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} ngày`;
+}
+
 /** Tách textarea thành danh sách, bỏ dòng trống. */
 export function lines(value: string) {
   return value

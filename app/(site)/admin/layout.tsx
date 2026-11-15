@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./admin.css";
 import "./admin-components.css";
+import "./admin-dashboard.css";
 import "./admin-two-factor.css";
 
 export const metadata: Metadata = {

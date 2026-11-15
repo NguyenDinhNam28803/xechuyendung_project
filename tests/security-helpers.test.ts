@@ -47,6 +47,17 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["account", "2fa", "disable"],
       ["account", "2fa", "recovery-codes"],
       ["users", id, "2fa", "reset"],
+      ["vehicles", "bulk"],
+      ["legal-resources", "bulk"],
+      ["stats", "overview"],
+      ["stats", "contacts"],
+      ["stats", "activity"],
+      ["vehicle-categories"],
+      ["vehicle-categories", id],
+      ["account", "sessions"],
+      ["account", "sessions", id],
+      ["users", id, "sessions"],
+      ["users", id, "sessions", "revoke"],
     ]) {
       assert.equal(isAllowedPath(path), true, path.join("/"));
     }
@@ -57,13 +68,19 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["vehicles", "../auth"],
       ["vehicles", "not-a-uuid"],
       ["auth", "login"],
-      ["users", id, "sessions"],
       ["account", "delete"],
       ["account", "2fa", "secret"],
       ["account", "2fa", "setup", "x"],
       ["users", "not-a-uuid", "2fa", "reset"],
       ["users", id, "2fa", "disable"],
       ["vehicles", id, "2fa", "reset"],
+      ["users", "bulk"],
+      ["vehicle-categories", "bulk"],
+      ["stats", "secrets"],
+      ["stats", "overview", "extra"],
+      ["account", "sessions", "not-a-uuid"],
+      ["users", id, "sessions", "delete"],
+      ["users", id, "password"],
       [],
     ]) {
       assert.equal(isAllowedPath(path), false, path.join("/"));

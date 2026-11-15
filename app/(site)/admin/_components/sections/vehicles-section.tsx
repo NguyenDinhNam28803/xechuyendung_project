@@ -3,16 +3,24 @@
 import { useCallback, useState } from "react";
 import { adminFetch, errorMessage } from "../../_lib/admin-api";
 import { cleanImages, cleanSpecs, type SpecRow } from "../../_lib/content-fields";
-import { lines } from "../../_lib/format";
+import { formatDate, lines } from "../../_lib/format";
 import { autoSlug } from "../../_lib/slug";
 import type { AdminVehicle, PageResponse, VehicleInput } from "../../_lib/types";
+import { useContentActions } from "../../_lib/use-content-actions";
 import { useEntityEditor } from "../../_lib/use-entity-editor";
+import { useVehicleCategoryNames } from "../../_lib/use-vehicle-categories";
+import { useSelection } from "../../_lib/use-selection";
 import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { DetailDialog, DetailItem, SourceLink } from "../detail-dialog";
 import { Drawer } from "../drawer";
 import { ImageListEditor, SlugField, SpecsEditor } from "../form-editors";
 import {
-  EmptyRow,
+  ContentBulkButtons,
+  DataTable,
+  PublishSwitch,
+  type Column,
+} from "../data-table";
+import {
   Feedback,
   Field,
   FilterTabs,
@@ -20,7 +28,6 @@ import {
   FormError,
   ListControls,
   Pagination,
-  PublishStatus,
   PublishToggle,
   publishFilterOptions,
   RowActions,
@@ -61,8 +68,7 @@ const emptyForm = (): VehicleForm => ({
   isPublished: false,
 });
 
-const categories = ["Xe tải", "Xe chữa cháy", "Xe cứu hộ", "Xe bồn / xe môi trường"];
-const filterKeys = ["published"] as const;
+const filterKeys = ["published", "sort", "limit"] as const;
 
 function toForm(vehicle: AdminVehicle): VehicleForm {
   return {
@@ -106,12 +112,68 @@ function toPayload(form: VehicleForm): VehicleInput {
   };
 }
 
+const columns = (
+  actions: ReturnType<typeof useContentActions<AdminVehicle>>,
+  open: { detail: (row: AdminVehicle) => void; edit: (row: AdminVehicle) => void; remove: (row: AdminVehicle) => void },
+): Column<AdminVehicle>[] => [
+  {
+    key: "name",
+    header: "Tên xe",
+    sortKey: "name",
+    cell: (vehicle) => (
+      <>
+        <strong>{vehicle.name}</strong>
+        <small>{vehicle.slug}</small>
+      </>
+    ),
+  },
+  { key: "make", header: "Hãng xe", sortKey: "make", cell: (vehicle) => vehicle.make },
+  { key: "category", header: "Danh mục", sortKey: "category", cell: (vehicle) => vehicle.category },
+  {
+    key: "status",
+    header: "Trạng thái",
+    sortKey: "isPublished",
+    cell: (vehicle) => (
+      <PublishSwitch
+        isPublished={vehicle.isPublished}
+        label={vehicle.name}
+        onToggle={() => void actions.togglePublished(vehicle)}
+        pending={actions.isPending(vehicle.id)}
+      />
+    ),
+  },
+  {
+    key: "updatedAt",
+    header: "Cập nhật",
+    sortKey: "updatedAt",
+    className: "admin-nowrap",
+    cell: (vehicle) => formatDate(vehicle.updatedAt),
+  },
+  {
+    key: "actions",
+    header: "Hành động",
+    cell: (vehicle) => (
+      <RowActions
+        onDetail={() => open.detail(vehicle)}
+        onEdit={() => open.edit(vehicle)}
+        onDelete={() => open.remove(vehicle)}
+      />
+    ),
+  },
+];
+
 export function VehiclesSection() {
   const { toast, confirm } = useUiFeedback();
   const loader = useCallback(
     (page: number, search: string, filters: Record<string, string>) =>
       adminFetch<PageResponse<AdminVehicle>>(
-        `/vehicles?${apiQuery({ page, limit: 25, q: search, published: filters.published })}`,
+        `/vehicles?${apiQuery({
+          page,
+          limit: Number(filters.limit) || 25,
+          q: search,
+          published: filters.published,
+          sort: filters.sort,
+        })}`,
       ),
     [],
   );
@@ -125,8 +187,18 @@ export function VehiclesSection() {
     savedMessage: "Đã lưu thông tin xe.",
     deletedMessage: "Đã xóa xe.",
   });
+  const selection = useSelection(list.items.map((item) => item.id));
+  const actions = useContentActions<AdminVehicle>({
+    basePath: "/vehicles",
+    noun: "xe",
+    updateItem: list.updateItem,
+    reload: list.reload,
+    onBulkDone: selection.clear,
+  });
+  const pageSize = Number(list.filters.limit) || 25;
   const [detail, setDetail] = useState<AdminVehicle | null>(null);
   const [importing, setImporting] = useState(false);
+  const categories = useVehicleCategoryNames();
   const form = editor.form;
 
   async function importDefaults() {
@@ -179,52 +251,30 @@ export function VehiclesSection() {
           value={list.filters.published ?? ""}
         />
       </ListControls>
-      <section className="admin-card admin-list">
-        <div className="admin-list-heading">
-          <h2>Xe</h2>
-          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
-        </div>
-        <div className="admin-data-table-wrap">
-          <table className="admin-data-table">
-            <thead>
-              <tr>
-                <th>Tên xe</th>
-                <th>Hãng xe</th>
-                <th>Danh mục</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((vehicle) => (
-                <tr key={vehicle.id}>
-                  <td>
-                    <strong>{vehicle.name}</strong>
-                    <small>{vehicle.slug}</small>
-                  </td>
-                  <td>{vehicle.make}</td>
-                  <td>{vehicle.category}</td>
-                  <td>
-                    <PublishStatus isPublished={vehicle.isPublished} />
-                  </td>
-                  <td>
-                    <RowActions
-                      onDetail={() => setDetail(vehicle)}
-                      onEdit={() => editor.openEdit(vehicle)}
-                      onDelete={() => void editor.remove(vehicle, vehicle.name)}
-                    />
-                  </td>
-                </tr>
-              ))}
-              {!list.loading && list.items.length === 0 && (
-                <EmptyRow colSpan={5}>
-                  Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa/bộ lọc.
-                </EmptyRow>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTable
+        bulkActions={
+          <ContentBulkButtons
+            disabled={actions.bulkRunning}
+            onAction={(action) => void actions.runBulk(action, selection.ids)}
+          />
+        }
+        columns={columns(actions, {
+          detail: setDetail,
+          edit: editor.openEdit,
+          remove: (vehicle) => void editor.remove(vehicle, vehicle.name),
+        })}
+        loading={list.loading}
+        minWidth={980}
+        onPageSizeChange={(size) => list.setFilter("limit", size === 25 ? "" : String(size))}
+        onSortChange={(sort) => list.setFilter("sort", sort)}
+        pageSize={pageSize}
+        rowLabel={(vehicle) => vehicle.name}
+        rows={list.items}
+        selection={selection}
+        sort={list.filters.sort}
+        title="Xe"
+        total={list.pageInfo.total}
+      />
       <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
 
       {form && (

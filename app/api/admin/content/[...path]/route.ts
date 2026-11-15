@@ -7,7 +7,7 @@ import {
   sessionCookieOptions,
   unavailable,
 } from "../../../../lib/admin-backend";
-import { isAllowedPath } from "../../../../lib/admin-paths";
+import { forwardedQueryKeys, isAllowedPath } from "../../../../lib/admin-paths";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
@@ -45,7 +45,7 @@ async function proxy(request: Request, context: RouteContext) {
   const requestUrl = new URL(request.url);
   const query = new URLSearchParams();
   if (request.method === "GET") {
-    for (const key of ["page", "limit", "q", "type", "published"]) {
+    for (const key of forwardedQueryKeys) {
       const value = requestUrl.searchParams.get(key);
       if (value !== null) query.set(key, value);
     }

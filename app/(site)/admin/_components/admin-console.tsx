@@ -38,6 +38,12 @@ const navigation: { group: string; items: NavItem[] }[] = [
         description: "Quản lý danh mục xe và thông tin hiển thị trên website.",
       },
       {
+        href: "/admin/vehicle-categories",
+        label: "Danh mục xe",
+        icon: "▦",
+        description: "Sắp xếp, đổi tên và thêm danh mục dùng cho xe.",
+      },
+      {
         href: "/admin/articles",
         label: "Bài viết",
         icon: "▤",
@@ -92,9 +98,9 @@ const navigation: { group: string; items: NavItem[] }[] = [
       },
       {
         href: "/admin/account",
-        label: "Đổi mật khẩu",
+        label: "Tài khoản của tôi",
         icon: "⚿",
-        description: "Đổi mật khẩu của bạn và đăng xuất khỏi các thiết bị khác.",
+        description: "Đổi mật khẩu và quản lý các thiết bị đang đăng nhập.",
       },
     ],
   },

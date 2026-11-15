@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { adminFetch, errorMessage, jsonBody } from "../../_lib/admin-api";
 import { roleLabels } from "../../_lib/format";
 import { useAdminSession } from "../session-context";
+import { SessionList } from "../session-list";
 import { Field, FormError } from "../ui";
 import { useUiFeedback } from "../ui-feedback";
 
@@ -52,6 +53,7 @@ export function AccountSection() {
   }
 
   return (
+    <>
     <section className="admin-card admin-editor admin-account">
       <form onSubmit={submit}>
         <h2>Đổi mật khẩu</h2>
@@ -102,5 +104,13 @@ export function AccountSection() {
         </div>
       </form>
     </section>
+    <section className="admin-card admin-editor admin-account">
+      <h2>Thiết bị đang đăng nhập</h2>
+      <p className="admin-form-note">
+        Mỗi phiên hết hạn sau 8 giờ. Đăng xuất thiết bị bạn không nhận ra, rồi đổi mật khẩu.
+      </p>
+      <SessionList mode="own" />
+    </section>
+    </>
   );
 }

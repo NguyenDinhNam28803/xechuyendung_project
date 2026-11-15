@@ -3,15 +3,23 @@
 import { useCallback, useState } from "react";
 import { adminFetch } from "../../_lib/admin-api";
 import { cleanSections, joinParagraphs, type ArticleSectionRow } from "../../_lib/content-fields";
+import { formatDate } from "../../_lib/format";
 import { autoSlug } from "../../_lib/slug";
 import type { AdminArticle, ArticleInput, PageResponse } from "../../_lib/types";
+import { useContentActions } from "../../_lib/use-content-actions";
 import { useEntityEditor } from "../../_lib/use-entity-editor";
+import { useSelection } from "../../_lib/use-selection";
 import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { DetailDialog, DetailItem } from "../detail-dialog";
 import { Drawer } from "../drawer";
 import { SectionsEditor, SlugField } from "../form-editors";
 import {
-  EmptyRow,
+  ContentBulkButtons,
+  DataTable,
+  PublishSwitch,
+  type Column,
+} from "../data-table";
+import {
   Feedback,
   Field,
   FilterTabs,
@@ -19,7 +27,6 @@ import {
   FormError,
   ListControls,
   Pagination,
-  PublishStatus,
   PublishToggle,
   publishFilterOptions,
   RowActions,
@@ -45,7 +52,7 @@ const emptyForm = (): ArticleForm => ({
   isPublished: false,
 });
 
-const filterKeys = ["published"] as const;
+const filterKeys = ["published", "sort", "limit"] as const;
 
 function toForm(article: AdminArticle): ArticleForm {
   return {
@@ -78,7 +85,13 @@ export function ArticlesSection() {
   const loader = useCallback(
     (page: number, search: string, filters: Record<string, string>) =>
       adminFetch<PageResponse<AdminArticle>>(
-        `/articles?${apiQuery({ page, limit: 25, q: search, published: filters.published })}`,
+        `/articles?${apiQuery({
+          page,
+          limit: Number(filters.limit) || 25,
+          q: search,
+          published: filters.published,
+          sort: filters.sort,
+        })}`,
       ),
     [],
   );
@@ -92,8 +105,62 @@ export function ArticlesSection() {
     savedMessage: "Đã lưu bài viết.",
     deletedMessage: "Đã xóa bài viết.",
   });
+  const selection = useSelection(list.items.map((item) => item.id));
+  const actions = useContentActions<AdminArticle>({
+    basePath: "/articles",
+    noun: "bài viết",
+    updateItem: list.updateItem,
+    reload: list.reload,
+    onBulkDone: selection.clear,
+  });
+  const pageSize = Number(list.filters.limit) || 25;
   const [detail, setDetail] = useState<AdminArticle | null>(null);
   const form = editor.form;
+  const columns: Column<AdminArticle>[] = [
+    {
+      key: "title",
+      header: "Tiêu đề bài viết",
+      sortKey: "title",
+      cell: (article) => (
+        <>
+          <strong>{article.title}</strong>
+          <small>{article.slug}</small>
+        </>
+      ),
+    },
+    { key: "category", header: "Chuyên mục", sortKey: "category", cell: (article) => article.category },
+    {
+      key: "status",
+      header: "Trạng thái",
+      sortKey: "isPublished",
+      cell: (article) => (
+        <PublishSwitch
+          isPublished={article.isPublished}
+          label={article.title}
+          onToggle={() => void actions.togglePublished(article)}
+          pending={actions.isPending(article.id)}
+        />
+      ),
+    },
+    {
+      key: "updatedAt",
+      header: "Cập nhật",
+      sortKey: "updatedAt",
+      className: "admin-nowrap",
+      cell: (article) => formatDate(article.updatedAt),
+    },
+    {
+      key: "actions",
+      header: "Hành động",
+      cell: (article) => (
+        <RowActions
+          onDetail={() => setDetail(article)}
+          onEdit={() => editor.openEdit(article)}
+          onDelete={() => void editor.remove(article, article.title)}
+        />
+      ),
+    },
+  ];
 
   return (
     <>
@@ -112,53 +179,26 @@ export function ArticlesSection() {
           value={list.filters.published ?? ""}
         />
       </ListControls>
-      <section className="admin-card admin-list">
-        <div className="admin-list-heading">
-          <h2>Bài viết</h2>
-          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
-        </div>
-        <div className="admin-data-table-wrap">
-          <table className="admin-data-table">
-            <thead>
-              <tr>
-                <th>Tiêu đề bài viết</th>
-                <th>Chuyên mục</th>
-                <th>Slug</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((article) => (
-                <tr key={article.id}>
-                  <td>
-                    <strong>{article.title}</strong>
-                  </td>
-                  <td>{article.category}</td>
-                  <td>
-                    <code>{article.slug}</code>
-                  </td>
-                  <td>
-                    <PublishStatus isPublished={article.isPublished} />
-                  </td>
-                  <td>
-                    <RowActions
-                      onDetail={() => setDetail(article)}
-                      onEdit={() => editor.openEdit(article)}
-                      onDelete={() => void editor.remove(article, article.title)}
-                    />
-                  </td>
-                </tr>
-              ))}
-              {!list.loading && list.items.length === 0 && (
-                <EmptyRow colSpan={5}>
-                  Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa/bộ lọc.
-                </EmptyRow>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTable
+        bulkActions={
+          <ContentBulkButtons
+            disabled={actions.bulkRunning}
+            onAction={(action) => void actions.runBulk(action, selection.ids)}
+          />
+        }
+        columns={columns}
+        loading={list.loading}
+        minWidth={920}
+        onPageSizeChange={(size) => list.setFilter("limit", size === 25 ? "" : String(size))}
+        onSortChange={(sort) => list.setFilter("sort", sort)}
+        pageSize={pageSize}
+        rowLabel={(row) => row.title}
+        rows={list.items}
+        selection={selection}
+        sort={list.filters.sort}
+        title={"Bài viết"}
+        total={list.pageInfo.total}
+      />
       <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
 
       {form && (

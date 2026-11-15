@@ -134,7 +134,31 @@ export function usePagedList<T>(loader: PagedLoader<T>, options: PagedListOption
     [load],
   );
 
+  /**
+   * Sửa một mục ngay trên danh sách đang hiển thị (cập nhật lạc quan). Trả về
+   * hàm hoàn tác để gọi khi API báo lỗi.
+   */
+  const updateItem = useCallback(
+    (match: (item: T) => boolean, patch: (item: T) => T) => {
+      let previous: T | undefined;
+      setItems((current) =>
+        current.map((item) => {
+          if (!match(item)) return item;
+          previous = item;
+          return patch(item);
+        }),
+      );
+      return () => {
+        const original = previous;
+        if (original === undefined) return;
+        setItems((current) => current.map((item) => (match(item) ? original : item)));
+      };
+    },
+    [],
+  );
+
   return {
+    updateItem,
     items,
     pageInfo,
     search,

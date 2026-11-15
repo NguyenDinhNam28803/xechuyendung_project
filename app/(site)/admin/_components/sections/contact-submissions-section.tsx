@@ -12,6 +12,7 @@ import {
 import { contactStatusLabels, formatDate } from "../../_lib/format";
 import type { ContactStatus, ContactSubmission } from "../../_lib/types";
 import { usePagedList } from "../../_lib/use-paged-list";
+import { SortableHeader } from "../data-table";
 import { DetailItem } from "../detail-dialog";
 import { Drawer } from "../drawer";
 import {
@@ -26,7 +27,7 @@ import {
 } from "../ui";
 import { useUiFeedback } from "../ui-feedback";
 
-const filterKeys = ["status"] as const;
+const filterKeys = ["status", "sort"] as const;
 
 function isContactStatus(value: string | undefined): value is ContactStatus {
   return contactStatuses.includes(value as ContactStatus);
@@ -49,6 +50,7 @@ export function ContactSubmissionsSection() {
         limit: 25,
         search,
         status: isContactStatus(filters.status) ? filters.status : undefined,
+        sort: filters.sort || undefined,
       }),
     [],
   );
@@ -155,12 +157,12 @@ export function ContactSubmissionsSection() {
           <table className="admin-data-table admin-contact-table">
             <thead>
               <tr>
-                <th>Khách hàng</th>
+                <SortableHeader label="Khách hàng" sortKey="name" sort={list.filters.sort} onSortChange={(value) => list.setFilter("sort", value)} />
                 <th>Liên hệ</th>
-                <th>Nhu cầu</th>
+                <SortableHeader label="Nhu cầu" sortKey="category" sort={list.filters.sort} onSortChange={(value) => list.setFilter("sort", value)} />
                 <th>Khu vực / xe</th>
                 <th>Nội dung</th>
-                <th>Ngày gửi</th>
+                <SortableHeader label="Ngày gửi" sortKey="createdAt" sort={list.filters.sort} onSortChange={(value) => list.setFilter("sort", value)} />
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -261,6 +263,9 @@ export function ContactSubmissionsSection() {
               )}
             </DetailItem>
             <DetailItem label="Ngày gửi">{formatDate(selected.createdAt)}</DetailItem>
+            <DetailItem label="Xử lý lần đầu">
+              {selected.firstHandledAt ? formatDate(selected.firstHandledAt) : "Chưa xử lý"}
+            </DetailItem>
             <DetailItem label="Nội dung" full prose>
               {selected.message || "Khách hàng không để lại nội dung."}
             </DetailItem>

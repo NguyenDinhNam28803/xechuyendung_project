@@ -23,6 +23,18 @@ export type LegalResourceInput = Schemas["LegalResourceInput"];
 export type LegalResourceType = AdminLegalResource["resourceType"];
 export type ContactStatus = ContactSubmission["status"];
 
+export type StatsOverview = Schemas["StatsOverview"];
+export type ContactStats = Schemas["ContactStats"];
+export type ActivityStats = Schemas["ActivityStats"];
+export type ContactStatusCounts = Schemas["ContactStatusCounts"];
+export type ActivityAction = Schemas["ActivityAction"];
+export type ActivityEntityType = Schemas["ActivityEntityType"];
+export type BulkAction = Schemas["BulkRequest"]["action"];
+export type BulkResult = Schemas["BulkResult"];
+export type AdminSession = Schemas["AdminSession"];
+export type VehicleCategory = Schemas["VehicleCategory"];
+export type VehicleCategoryInput = Schemas["VehicleCategoryInput"];
+
 export type PageResponse<T> = {
   items: T[];
   pagination: PageInfo;

@@ -41,6 +41,17 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["contact-submissions", "search"],
       ["contact-submissions", id, "status"],
       ["import-defaults"],
+      ["vehicles", "bulk"],
+      ["legal-resources", "bulk"],
+      ["stats", "overview"],
+      ["stats", "contacts"],
+      ["stats", "activity"],
+      ["vehicle-categories"],
+      ["vehicle-categories", id],
+      ["account", "sessions"],
+      ["account", "sessions", id],
+      ["users", id, "sessions"],
+      ["users", id, "sessions", "revoke"],
     ]) {
       assert.equal(isAllowedPath(path), true, path.join("/"));
     }
@@ -51,8 +62,14 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["vehicles", "../auth"],
       ["vehicles", "not-a-uuid"],
       ["auth", "login"],
-      ["users", id, "sessions"],
       ["account", "delete"],
+      ["users", "bulk"],
+      ["vehicle-categories", "bulk"],
+      ["stats", "secrets"],
+      ["stats", "overview", "extra"],
+      ["account", "sessions", "not-a-uuid"],
+      ["users", id, "sessions", "delete"],
+      ["users", id, "password"],
       [],
     ]) {
       assert.equal(isAllowedPath(path), false, path.join("/"));

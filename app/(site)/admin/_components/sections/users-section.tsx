@@ -6,10 +6,11 @@ import { formatDate, roleLabels } from "../../_lib/format";
 import type { AdminRole, AdminUser, PageResponse } from "../../_lib/types";
 import { useUnsavedChangesWarning } from "../../_lib/use-entity-editor";
 import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
+import { DataTable, type Column } from "../data-table";
 import { Drawer } from "../drawer";
 import { useAdminSession } from "../session-context";
+import { SessionList } from "../session-list";
 import {
-  EmptyRow,
   Feedback,
   Field,
   FormActions,
@@ -35,6 +36,8 @@ const emptyForm: CreateForm = {
   role: "editor",
 };
 
+const filterKeys = ["sort", "limit"] as const;
+
 export function UsersSection() {
   const { isAdmin } = useAdminSession();
   if (!isAdmin) {
@@ -47,11 +50,14 @@ function UsersManager() {
   const { user: currentUser } = useAdminSession();
   const { toast, confirm, prompt } = useUiFeedback();
   const loader = useCallback(
-    (page: number, search: string) =>
-      adminFetch<PageResponse<AdminUser>>(`/users?${apiQuery({ page, limit: 25, q: search })}`),
+    (page: number, search: string, filters: Record<string, string>) =>
+      adminFetch<PageResponse<AdminUser>>(
+        `/users?${apiQuery({ page, limit: Number(filters.limit) || 25, q: search, sort: filters.sort })}`,
+      ),
     [],
   );
-  const list = usePagedList(loader);
+  const list = usePagedList(loader, { filterKeys });
+  const [devicesOf, setDevicesOf] = useState<AdminUser | null>(null);
   const [form, setFormState] = useState<CreateForm | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -152,6 +158,83 @@ function UsersManager() {
     await update(target, { password }, `Đã đặt lại mật khẩu cho ${target.username}.`);
   }
 
+  const columns: Column<AdminUser>[] = [
+    {
+      key: "account",
+      header: "Tài khoản",
+      sortKey: "displayName",
+      cell: (account) => (
+        <>
+          <strong>{account.displayName}</strong>
+          <small>
+            {account.username}
+            {account.id === currentUser.id ? " · bạn" : ""}
+          </small>
+        </>
+      ),
+    },
+    {
+      key: "role",
+      header: "Vai trò",
+      sortKey: "role",
+      cell: (account) => (
+        <select
+          aria-label={`Vai trò của ${account.username}`}
+          disabled={account.id === currentUser.id}
+          onChange={(event) => void changeRole(account, event.target.value as AdminRole)}
+          value={account.role}
+        >
+          <option value="editor">{roleLabels.editor}</option>
+          <option value="admin">{roleLabels.admin}</option>
+        </select>
+      ),
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      sortKey: "isActive",
+      cell: (account) => (
+        <span className={`admin-table-status ${account.isActive ? "is-published" : ""}`}>
+          {account.isActive ? "Đang hoạt động" : "Đã khóa"}
+        </span>
+      ),
+    },
+    {
+      key: "lastLoginAt",
+      header: "Đăng nhập gần nhất",
+      sortKey: "lastLoginAt",
+      className: "admin-nowrap",
+      cell: (account) => formatDate(account.lastLoginAt),
+    },
+    {
+      key: "actions",
+      header: "Hành động",
+      cell: (account) => (
+        <div className="admin-table-actions">
+          <button className="admin-table-button" onClick={() => setDevicesOf(account)} type="button">
+            Thiết bị
+          </button>
+          <button
+            className="admin-table-button"
+            onClick={() => void resetPassword(account)}
+            type="button"
+          >
+            Đặt lại mật khẩu
+          </button>
+          {account.id !== currentUser.id && (
+            <button
+              className={`admin-table-button${account.isActive ? " admin-table-danger" : ""}`}
+              onClick={() => void toggleActive(account)}
+              type="button"
+            >
+              {account.isActive ? "Khóa" : "Mở khóa"}
+            </button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
       <Toolbar total={list.pageInfo.total} caption="Tài khoản quản trị">
@@ -176,82 +259,29 @@ function UsersManager() {
           placeholder="Tên đăng nhập hoặc tên hiển thị..."
         />
       </ListControls>
-      <section className="admin-card admin-list">
-        <div className="admin-list-heading">
-          <h2>Tài khoản</h2>
-          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} tài khoản`}</span>
-        </div>
-        <div className="admin-data-table-wrap">
-          <table className="admin-data-table">
-            <thead>
-              <tr>
-                <th>Tài khoản</th>
-                <th>Vai trò</th>
-                <th>Trạng thái</th>
-                <th>Đăng nhập gần nhất</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((account) => {
-                const isSelf = account.id === currentUser.id;
-                return (
-                  <tr key={account.id}>
-                    <td>
-                      <strong>{account.displayName}</strong>
-                      <small>
-                        {account.username}
-                        {isSelf ? " · bạn" : ""}
-                      </small>
-                    </td>
-                    <td>
-                      <select
-                        aria-label={`Vai trò của ${account.username}`}
-                        disabled={isSelf}
-                        onChange={(event) => void changeRole(account, event.target.value as AdminRole)}
-                        value={account.role}
-                      >
-                        <option value="editor">{roleLabels.editor}</option>
-                        <option value="admin">{roleLabels.admin}</option>
-                      </select>
-                    </td>
-                    <td>
-                      <span className={`admin-table-status ${account.isActive ? "is-published" : ""}`}>
-                        {account.isActive ? "Đang hoạt động" : "Đã khóa"}
-                      </span>
-                    </td>
-                    <td>{formatDate(account.lastLoginAt)}</td>
-                    <td>
-                      <div className="admin-table-actions">
-                        <button
-                          className="admin-table-button"
-                          onClick={() => void resetPassword(account)}
-                          type="button"
-                        >
-                          Đặt lại mật khẩu
-                        </button>
-                        {!isSelf && (
-                          <button
-                            className={`admin-table-button${account.isActive ? " admin-table-danger" : ""}`}
-                            onClick={() => void toggleActive(account)}
-                            type="button"
-                          >
-                            {account.isActive ? "Khóa" : "Mở khóa"}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-              {!list.loading && list.items.length === 0 && (
-                <EmptyRow colSpan={5}>Không có tài khoản phù hợp.</EmptyRow>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTable
+        columns={columns}
+        emptyMessage="Không có tài khoản phù hợp."
+        loading={list.loading}
+        onPageSizeChange={(size) => list.setFilter("limit", size === 25 ? "" : String(size))}
+        onSortChange={(sort) => list.setFilter("sort", sort)}
+        pageSize={Number(list.filters.limit) || 25}
+        rows={list.items}
+        sort={list.filters.sort}
+        title="Tài khoản"
+        total={list.pageInfo.total}
+      />
       <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
+
+      {devicesOf && (
+        <Drawer
+          eyebrow="THIẾT BỊ ĐĂNG NHẬP"
+          onRequestClose={() => setDevicesOf(null)}
+          title={devicesOf.displayName}
+        >
+          <SessionList mode="user" userId={devicesOf.id} username={devicesOf.username} />
+        </Drawer>
+      )}
 
       {form && (
         <Drawer

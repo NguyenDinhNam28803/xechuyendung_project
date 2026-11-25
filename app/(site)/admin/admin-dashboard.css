@@ -126,16 +126,13 @@ a.admin-stat-tile:hover {
 }
 
 .admin-sparkline {
+  width: 120px;
+  height: 32px;
   margin-top: 4px;
-  overflow: visible;
 }
 
-.admin-sparkline polyline {
-  fill: none;
-  stroke: #9aa7ae;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
+.admin-sparkline svg {
+  overflow: visible;
 }
 
 .admin-sparkline circle {
@@ -216,32 +213,19 @@ a.admin-stat-tile:hover {
   overflow: visible;
 }
 
-.admin-chart svg:focus-visible {
+.admin-chart:focus-visible {
   outline: 2px solid #efa72f;
   outline-offset: 4px;
   border-radius: 4px;
 }
 
-line.admin-chart-gridline {
-  stroke: var(--chart-grid);
-  stroke-width: 1;
+.admin-chart .recharts-cartesian-grid line,
+.admin-chart .recharts-cartesian-axis-line {
   shape-rendering: crispEdges;
 }
 
-line.admin-chart-baseline {
-  stroke: var(--chart-axis);
-  stroke-width: 1;
-  shape-rendering: crispEdges;
-}
-
-.admin-chart-tick {
-  fill: var(--chart-ink-muted);
-  font-size: 11px;
+.admin-chart .recharts-cartesian-axis-tick-value {
   font-variant-numeric: tabular-nums;
-}
-
-.admin-chart-hover-band {
-  fill: rgb(25 53 74 / 6%);
 }
 
 .admin-chart-tooltip {

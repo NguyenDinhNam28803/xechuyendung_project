@@ -9,19 +9,29 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
-import { niceTicks } from "../_lib/chart-math";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { formatCount, formatLongDay, formatShortDay } from "../_lib/format";
 
 /**
- * Bộ biểu đồ SVG nhẹ cho trang tổng quan (không thêm thư viện).
+ * Biểu đồ của trang tổng quan, vẽ bằng Recharts (trục, lưới, cột chồng,
+ * sparkline). Phần không phải biểu đồ trục (thanh tỷ lệ, thanh ngang, thẻ chỉ
+ * số) là HTML/CSS thuần vì không cần trục và nhẹ hơn.
  *
  * Quy ước (theo hướng dẫn trực quan hóa dữ liệu của dự án):
  *  - màu series lấy từ biến CSS --series-N theo THỨ TỰ CỐ ĐỊNH, gắn với thực
  *    thể (trạng thái/hành động) chứ không theo thứ hạng;
- *  - cột ≤ 24px, đầu bo 4px ở phía dữ liệu, khe 2px màu nền giữa các đoạn;
+ *  - cột ≤ 24px, đầu bo 4px ở phía dữ liệu, khe màu nền giữa các đoạn;
  *  - lưới hairline 1px, chữ dùng màu chữ (không dùng màu series);
- *  - có tooltip khi rê chuột/phím mũi tên, chú giải luôn hiện khi ≥ 2 series,
- *    và nút "Xem dạng bảng" (vài màu có tương phản < 3:1 với nền trắng).
+ *  - tooltip khi rê chuột HOẶC phím mũi tên (cùng một trạng thái), chú giải
+ *    luôn hiện khi ≥ 2 series, và nút "Xem dạng bảng".
  */
 
 export type SeriesDef<Key extends string> = {
@@ -44,22 +54,6 @@ function useElementWidth<E extends HTMLElement>() {
     return () => observer.disconnect();
   }, []);
   return [ref, width] as const;
-}
-
-
-/** Path cột có góc bo `r` chỉ ở hai góc trên (đầu dữ liệu). */
-function roundedTopRect(x: number, y: number, width: number, height: number, r: number) {
-  const radius = Math.min(r, width / 2, height);
-  if (radius <= 0) return `M${x},${y}h${width}v${height}h${-width}Z`;
-  return [
-    `M${x},${y + height}`,
-    `V${y + radius}`,
-    `Q${x},${y} ${x + radius},${y}`,
-    `H${x + width - radius}`,
-    `Q${x + width},${y} ${x + width},${y + radius}`,
-    `V${y + height}`,
-    "Z",
-  ].join(" ");
 }
 
 export function Legend<Key extends string>({
@@ -129,11 +123,30 @@ export function ChartCard({
   );
 }
 
+/** Path cột có góc bo `r` chỉ ở hai góc trên (đầu dữ liệu). */
+function roundedTopRect(x: number, y: number, width: number, height: number, r: number) {
+  if (height <= 0 || width <= 0) return "";
+  const radius = Math.min(r, width / 2, height);
+  if (radius <= 0) return `M${x},${y}h${width}v${height}h${-width}Z`;
+  return [
+    `M${x},${y + height}`,
+    `V${y + radius}`,
+    `Q${x},${y} ${x + radius},${y}`,
+    `H${x + width - radius}`,
+    `Q${x + width},${y} ${x + width},${y + radius}`,
+    `V${y + height}`,
+    "Z",
+  ].join(" ");
+}
+
 type StackedPoint<Key extends string> = { day: string; values: Record<Key, number> };
 
+const chartMargin = { top: 12, right: 8, bottom: 0, left: 0 };
+const yAxisWidth = 36;
+
 /**
- * Cột chồng theo ngày (một trục, mốc 0). Rê chuột hoặc dùng phím ←/→ khi
- * biểu đồ đang focus để xem chi tiết từng ngày.
+ * Cột chồng theo ngày (một trục, mốc 0). Rê chuột hoặc focus rồi dùng phím
+ * ←/→ để xem chi tiết từng ngày; Esc để đóng.
  */
 export function StackedColumnChart<Key extends string>({
   data,
@@ -151,22 +164,18 @@ export function StackedColumnChart<Key extends string>({
   const [active, setActive] = useState<number | null>(null);
   const tooltipId = useId();
 
-  const margin = { top: 12, right: 8, bottom: 26, left: 36 };
-  const innerWidth = Math.max(0, width - margin.left - margin.right);
-  const innerHeight = height - margin.top - margin.bottom;
+  const rows = data.map((point) => ({ day: point.day, ...point.values }));
   const totals = data.map((point) =>
     series.reduce((sum, item) => sum + (point.values[item.key] ?? 0), 0),
   );
-  const ticks = niceTicks(Math.max(...totals, 0));
-  const maxTick = ticks[ticks.length - 1] || 1;
-  const band = data.length > 0 ? innerWidth / data.length : 0;
-  const barWidth = Math.max(2, Math.min(24, band * 0.68));
-  const y = (value: number) => innerHeight - (value / maxTick) * innerHeight;
   // Nhãn trục X thưa: khoảng 6–8 nhãn bất kể số ngày.
   const labelEvery = Math.max(1, Math.ceil(data.length / 7));
-  const gap = 2;
+  // Đoạn trên cùng (khác 0) của mỗi cột được bo góc ở đầu dữ liệu.
+  const topKey = data.map((point) =>
+    [...series].reverse().find((item) => (point.values[item.key] ?? 0) > 0)?.key,
+  );
 
-  function onKeyDown(event: KeyboardEvent<SVGSVGElement>) {
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (data.length === 0) return;
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
       event.preventDefault();
@@ -183,82 +192,81 @@ export function StackedColumnChart<Key extends string>({
   }
 
   const activePoint = active !== null ? data[active] : null;
+  const plotLeft = chartMargin.left + yAxisWidth;
+  const band = data.length > 0 ? (width - plotLeft - chartMargin.right) / data.length : 0;
   const tooltipLeft =
-    active !== null ? Math.min(Math.max(margin.left + band * (active + 0.5), 90), width - 90) : 0;
+    active !== null ? Math.min(Math.max(plotLeft + band * (active + 0.5), 90), width - 90) : 0;
 
   return (
-    <div className="admin-chart" ref={containerRef}>
+    <div
+      aria-describedby={activePoint ? tooltipId : undefined}
+      aria-label={label}
+      className="admin-chart"
+      onBlur={() => setActive(null)}
+      onKeyDown={onKeyDown}
+      ref={containerRef}
+      role="img"
+      style={{ minHeight: height }}
+      tabIndex={0}
+    >
       {width > 0 && (
-        <svg
-          aria-describedby={activePoint ? tooltipId : undefined}
-          aria-label={label}
+        <BarChart
+          accessibilityLayer={false}
+          barCategoryGap="32%"
+          data={rows}
           height={height}
-          onBlur={() => setActive(null)}
-          onKeyDown={onKeyDown}
+          margin={chartMargin}
           onMouseLeave={() => setActive(null)}
-          onMouseMove={(event) => {
-            const box = event.currentTarget.getBoundingClientRect();
-            const index = Math.floor((event.clientX - box.left - margin.left) / band);
-            setActive(index >= 0 && index < data.length ? index : null);
+          onMouseMove={(state) => {
+            const index = Number(state?.activeTooltipIndex);
+            setActive(Number.isInteger(index) && index >= 0 ? index : null);
           }}
-          role="img"
-          tabIndex={0}
           width={width}
         >
-          <g transform={`translate(${margin.left},${margin.top})`}>
-            {ticks.map((tick) => (
-              <g key={tick} transform={`translate(0,${y(tick)})`}>
-                <line className={tick === 0 ? "admin-chart-baseline" : "admin-chart-gridline"} x2={innerWidth} />
-                <text className="admin-chart-tick" dy="0.32em" textAnchor="end" x={-8}>
-                  {formatCount(tick)}
-                </text>
-              </g>
-            ))}
-            {active !== null && (
-              <rect
-                className="admin-chart-hover-band"
-                height={innerHeight}
-                width={band}
-                x={band * active}
-              />
-            )}
-            {data.map((point, index) => {
-              const x = band * index + (band - barWidth) / 2;
-              let base = 0;
-              const visible = series.filter((item) => (point.values[item.key] ?? 0) > 0);
-              return (
-                <g key={point.day}>
-                  {visible.map((item, segmentIndex) => {
-                    const value = point.values[item.key];
-                    const top = y(base + value);
-                    const bottom = y(base);
-                    base += value;
-                    const isTop = segmentIndex === visible.length - 1;
-                    // Khe 2px màu nền giữa các đoạn (trừ đoạn sát trục).
-                    const segmentHeight = Math.max(0, bottom - top - (segmentIndex > 0 ? gap : 0));
-                    return (
-                      <path
-                        d={roundedTopRect(x, top, barWidth, segmentHeight, isTop && barWidth >= 8 ? 4 : 0)}
-                        fill={`var(--series-${item.slot})`}
-                        key={item.key}
-                      />
-                    );
-                  })}
-                  {index % labelEvery === 0 && (
-                    <text
-                      className="admin-chart-tick"
-                      textAnchor="middle"
-                      x={band * index + band / 2}
-                      y={innerHeight + 18}
-                    >
-                      {formatShortDay(point.day)}
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </g>
-        </svg>
+          <CartesianGrid stroke="var(--chart-grid)" vertical={false} />
+          <XAxis
+            axisLine={{ stroke: "var(--chart-axis)" }}
+            dataKey="day"
+            interval={labelEvery - 1}
+            tick={{ fill: "var(--chart-ink-muted)", fontSize: 11 }}
+            tickFormatter={(day: string) => formatShortDay(day)}
+            tickLine={false}
+          />
+          <YAxis
+            allowDecimals={false}
+            axisLine={false}
+            tick={{ fill: "var(--chart-ink-muted)", fontSize: 11 }}
+            tickFormatter={(value: number) => formatCount(value)}
+            tickLine={false}
+            width={yAxisWidth}
+          />
+          {series.map((item) => (
+            <Bar
+              dataKey={item.key}
+              fill={`var(--series-${item.slot})`}
+              isAnimationActive={false}
+              key={item.key}
+              maxBarSize={24}
+              name={item.label}
+              stackId="total"
+              // Mỗi đoạn tự vẽ: viền màu nền tạo khe giữa các đoạn, chỉ đoạn
+              // trên cùng được bo góc, ngày không được chọn bị làm mờ.
+              shape={(props: unknown) => {
+                const { x = 0, y = 0, width: w = 0, height: h = 0, index = 0 } =
+                  props as { x?: number; y?: number; width?: number; height?: number; index?: number };
+                return (
+                  <path
+                    d={roundedTopRect(x, y, w, h, topKey[index] === item.key && w >= 8 ? 4 : 0)}
+                    fill={`var(--series-${item.slot})`}
+                    fillOpacity={active === null || active === index ? 1 : 0.45}
+                    stroke="var(--chart-surface)"
+                    strokeWidth={1}
+                  />
+                );
+              }}
+            />
+          ))}
+        </BarChart>
       )}
       {activePoint && active !== null && (
         <div className="admin-chart-tooltip" id={tooltipId} role="status" style={{ left: tooltipLeft }}>
@@ -372,29 +380,38 @@ export function SegmentBar<Key extends string>({
   );
 }
 
-/** Đường xu hướng nhỏ (không trục) cho thẻ chỉ số. */
+/** Đường xu hướng nhỏ (không trục) cho thẻ chỉ số; chấm đánh dấu giá trị cuối. */
 export function Sparkline({ values, label }: { values: number[]; label: string }) {
-  const width = 120;
-  const height = 32;
   if (values.length < 2) return null;
-  const max = Math.max(...values, 1);
-  const step = width / (values.length - 1);
-  const points = values
-    .map((value, index) => `${(index * step).toFixed(1)},${(height - 3 - (value / max) * (height - 6)).toFixed(1)}`)
-    .join(" ");
-  const last = values[values.length - 1];
+  const rows = values.map((value, index) => ({ index, value }));
+  const last = values.length - 1;
   return (
-    <svg
-      aria-label={label}
-      className="admin-sparkline"
-      height={height}
-      role="img"
-      viewBox={`0 0 ${width} ${height}`}
-      width={width}
-    >
-      <polyline points={points} />
-      <circle cx={width - 1} cy={height - 3 - (last / max) * (height - 6)} r={3} />
-    </svg>
+    <div aria-label={label} className="admin-sparkline" role="img">
+      <LineChart
+        accessibilityLayer={false}
+        data={rows}
+        height={32}
+        margin={{ top: 4, right: 4, bottom: 4, left: 4 }}
+        width={120}
+      >
+        <YAxis domain={[0, "dataMax"]} hide />
+        <Line
+          dataKey="value"
+          dot={(props: { cx?: number; cy?: number; index?: number }) =>
+            props.index === last ? (
+              <circle cx={props.cx} cy={props.cy} key="last" r={3} />
+            ) : (
+              <g key={props.index} />
+            )
+          }
+          isAnimationActive={false}
+          stroke="#9aa7ae"
+          strokeLinecap="round"
+          strokeWidth={2}
+          type="linear"
+        />
+      </LineChart>
+    </div>
   );
 }
 

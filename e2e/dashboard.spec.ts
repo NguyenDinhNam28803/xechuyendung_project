@@ -7,7 +7,22 @@ async function snap(page: import("@playwright/test").Page, name: string) {
   if (directory) await page.screenshot({ path: `${directory}/${name}.png`, fullPage: true });
 }
 
-test("tổng quan hiển thị chỉ số, biểu đồ và chế độ xem bảng", async ({ page }) => {
+test("tổng quan hiển thị chỉ số, biểu đồ và chế độ xem bảng", async ({ page, request }) => {
+  // Tự tạo dữ liệu: database E2E có thể trống (CI tạo mới mỗi lần), và bảng
+  // thay thế chỉ liệt kê những ngày có yêu cầu liên hệ.
+  const response = await request.post("/api/contact", {
+    data: {
+      name: `Khách tổng quan ${runId}`,
+      phone: "0901 234 568",
+      category: "Xe tải",
+      location: "Hà Nội",
+      message: "Kiểm thử biểu đồ tổng quan.",
+      consent: true,
+      companyWebsite: "",
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+
   await page.goto("/admin");
   await expect(page.getByRole("heading", { name: "Yêu cầu liên hệ theo ngày" })).toBeVisible();
   await expect(page.getByRole("img", { name: /Biểu đồ cột chồng: \d+ yêu cầu liên hệ/ })).toBeVisible();

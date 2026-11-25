@@ -1,10 +1,9 @@
 /**
- * Hàm thuần của dashboard v2: vạch chia trục, tham số sắp xếp, định dạng số
+ * Hàm thuần của dashboard v2: tham số sắp xếp, định dạng số
  * liệu và nhận diện thiết bị đăng nhập.
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { niceTicks } from "../app/(site)/admin/_lib/chart-math.ts";
 import {
   formatCount,
   formatHours,
@@ -12,22 +11,6 @@ import {
 } from "../app/(site)/admin/_lib/format.ts";
 import { nextSortParam, parseSortParam } from "../app/(site)/admin/_lib/sort-param.ts";
 import { describeUserAgent } from "../app/(site)/admin/_lib/user-agent.ts";
-
-describe("niceTicks", () => {
-  it("chia trục bằng bước 1/2/5 và luôn phủ giá trị lớn nhất", () => {
-    assert.deepEqual(niceTicks(7), [0, 2, 4, 6, 8]);
-    assert.deepEqual(niceTicks(100), [0, 50, 100]);
-    const ticks = niceTicks(137);
-    assert.equal(ticks[0], 0);
-    assert.ok(ticks[ticks.length - 1] >= 137);
-    const step = ticks[1] - ticks[0];
-    assert.ok([1, 2, 5].some((base) => Number.isInteger(Math.log10(step / base))));
-  });
-
-  it("dữ liệu rỗng vẫn có trục 0..1", () => {
-    assert.deepEqual(niceTicks(0), [0, 1]);
-  });
-});
 
 describe("tham số sắp xếp", () => {
   it("đọc field:asc|desc và bỏ giá trị lạ", () => {

@@ -1,15 +1,25 @@
-import { cookies } from "next/headers";
 import {
   apiBaseUrl,
   clientAddressHeaders,
   isRecord,
   messageFrom,
   readJson,
-  sessionCookie,
-  sessionCookieOptions,
+  retryAfter,
   unavailable,
 } from "../../../../lib/admin-backend";
+import {
+  completeSession,
+  isLoginChallenge,
+  isLoginSession,
+  startChallenge,
+} from "../../../../lib/admin-login";
 
+/**
+ * Bước 1 đăng nhập (tên + mật khẩu). NestJS trả một trong hai:
+ *  - phiên đăng nhập (tài khoản chưa bật 2FA): lưu cookie phiên;
+ *  - thử thách 2FA: lưu mã thử thách vào cookie HttpOnly, trình duyệt chỉ nhận
+ *    `{ mfaRequired: true }` rồi gửi mã ở /session/login/verify.
+ */
 export async function POST(request: Request) {
   const credentials: unknown = await request.json().catch(() => null);
   if (!isRecord(credentials)) {
@@ -40,28 +50,10 @@ export async function POST(request: Request) {
   }
 
   const result = await readJson(response);
-  if (!response.ok || !isLoginResult(result)) {
-    return Response.json(
-      { message: messageFrom(result, "Đăng nhập thất bại.") },
-      { status: response.ok ? 502 : response.status },
-    );
-  }
-
-  (await cookies()).set(
-    sessionCookie,
-    result.accessToken,
-    sessionCookieOptions(result.expiresIn),
-  );
-  // Không trả token về trình duyệt; chỉ trả thông tin hiển thị.
-  return Response.json({ ok: true, user: result.user });
-}
-
-function isLoginResult(
-  value: unknown,
-): value is { accessToken: string; expiresIn: number; user: unknown } {
-  return (
-    isRecord(value) &&
-    typeof value.accessToken === "string" &&
-    typeof value.expiresIn === "number"
+  if (response.ok && isLoginChallenge(result)) return startChallenge(result);
+  if (response.ok && isLoginSession(result)) return completeSession(result);
+  return Response.json(
+    { message: messageFrom(result, "Đăng nhập thất bại.") },
+    { status: response.ok ? 502 : response.status, headers: retryAfter(response) },
   );
 }

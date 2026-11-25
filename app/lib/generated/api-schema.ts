@@ -98,7 +98,7 @@ export interface paths {
         put?: never;
         /**
          * Exchange admin credentials for a revocable session token
-         * @description Rate limited to 5 requests per IP per 15 minutes and 10 attempts per username per 15 minutes. Unknown users, wrong passwords and disabled accounts all return the same 401 message.
+         * @description At most 20 requests per IP per 15 minutes. Only failed attempts are counted for lockout: 5 failures per (IP, username) per 15 minutes and 50 failures per username across all IPs per hour; a successful login clears the (IP, username) counter, so an attacker cannot lock the owner out from a different IP. Blocked requests get 429 with Retry-After. Unknown users, wrong passwords and disabled accounts all return the same 401 message. When the account has two-factor authentication enabled, no session is created: the response carries a 5-minute challengeToken to send to /api/v1/auth/login/verify with the code.
          */
         post: {
             parameters: {
@@ -117,24 +117,359 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Login succeeded. */
+                /** @description Password accepted; either a session or a 2FA challenge. */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /** @description Opaque random token; the server stores only its SHA-256 hash. */
-                            accessToken: string;
-                            /** @description Lifetime in seconds (28800). */
-                            expiresIn: number;
-                            user: components["schemas"]["AdminIdentity"];
+                        "application/json": components["schemas"]["LoginSession"] | components["schemas"]["TwoFactorChallenge"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete a login with a TOTP code or a one-time recovery code
+         * @description Send exactly one of code (6 digits) or recoveryCode. A challenge allows at most 5 attempts and expires after 5 minutes. Wrong codes count towards the same (IP, username) and per-username failure limits as wrong passwords. A TOTP code that was already used is rejected.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        challengeToken: string;
+                        code?: string;
+                        /** @description XXXX-XXXX-XXXX-XXXX; dashes and case are ignored. */
+                        recoveryCode?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Session created. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["LoginSession"] & {
+                            /** @description Present only when a recovery code was used. */
+                            recoveryCodesRemaining?: number;
                         };
                     };
                 };
                 400: components["responses"]["BadRequest"];
                 401: components["responses"]["Unauthorized"];
                 429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Two-factor status of the current account
+         * @description Allowed while the session is restricted for missing 2FA enrollment.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Current status. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            enabled: boolean;
+                            /** Format: date-time */
+                            enabledAt: string | null;
+                            /** @description True when the account's role must use 2FA. */
+                            required: boolean;
+                            recoveryCodesRemaining: number;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/2fa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start enrollment and get the secret to add to an authenticator app
+         * @description Creates a pending secret valid for 15 minutes. The client renders the otpauthUri as a QR code. Allowed while the session is restricted.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Pending secret. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Base32 secret for manual entry. */
+                            secret: string;
+                            otpauthUri: string;
+                            expiresIn: number;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                409: components["responses"]["Conflict"];
+                503: components["responses"]["ServiceUnavailable"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/2fa/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm enrollment with a code from the app
+         * @description Enables 2FA, returns 10 recovery codes (shown only this once) and revokes every other session of the account; the current session is kept. Allowed while the session is restricted.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCode"];
+                };
+            };
+            responses: {
+                /** @description 2FA enabled. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            enabled: true;
+                            recoveryCodes: components["schemas"]["RecoveryCodes"];
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                409: components["responses"]["Conflict"];
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/2fa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Turn 2FA off (only when the role does not require it) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: password */
+                        password: string;
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description 2FA disabled. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/2fa/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Replace the recovery codes (old codes stop working) */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["TwoFactorCode"];
+                };
+            };
+            responses: {
+                /** @description New recovery codes. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            recoveryCodes: components["schemas"]["RecoveryCodes"];
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                429: components["responses"]["TooManyRequests"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{id}/2fa/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset another account's 2FA (role admin, own 2FA enabled)
+         * @description Clears the secret and recovery codes and revokes every session of the account; it must enroll again at its next login. Not allowed on the caller's own account.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Reset done. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @constant */
+                            reset: true;
+                            sessionsRevoked: number;
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
             };
         };
         delete?: never;
@@ -185,7 +520,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Current admin identity and role */
+        /**
+         * Current admin identity, role and 2FA state
+         * @description Allowed while the session is restricted for missing 2FA enrollment.
+         */
         get: {
             parameters: {
                 query?: never;
@@ -201,7 +539,9 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["AdminIdentity"];
+                        "application/json": components["schemas"]["AdminIdentity"] & {
+                            twoFactorSetupRequired: boolean;
+                        };
                     };
                 };
                 401: components["responses"]["Unauthorized"];
@@ -275,6 +615,8 @@ export interface paths {
                     limit?: components["parameters"]["Limit"];
                     /** @description Case-insensitive substring; "%" and "_" are matched literally. */
                     q?: components["parameters"]["Search"];
+                    /** @description Sort as field:asc|desc. Fields: username, displayName, role, isActive, lastLoginAt, createdAt. */
+                    sort?: string;
                 };
                 header?: never;
                 path?: never;
@@ -657,6 +999,8 @@ export interface paths {
                     q?: components["parameters"]["Search"];
                     /** @description true = only published items, false = only drafts, omitted = all. */
                     published?: components["parameters"]["Published"];
+                    /** @description Sort as field:asc|desc. Fields: name, make, category, isPublished, createdAt, updatedAt. */
+                    sort?: string;
                 };
                 header?: never;
                 path?: never;
@@ -701,6 +1045,51 @@ export interface paths {
                 400: components["responses"]["BadRequest"];
                 401: components["responses"]["Unauthorized"];
                 409: components["responses"]["Conflict"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/vehicles/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish, unpublish or delete several vehicles in one transaction
+         * @description Unknown ids are ignored. Only rows that actually change are audited (one activity entry per row); `affected` reports how many changed.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["BulkRequest"];
+                };
+            };
+            responses: {
+                /** @description Bulk result. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BulkResult"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
             };
         };
         delete?: never;
@@ -794,6 +1183,8 @@ export interface paths {
                     q?: components["parameters"]["Search"];
                     /** @description true = only published items, false = only drafts, omitted = all. */
                     published?: components["parameters"]["Published"];
+                    /** @description Sort as field:asc|desc. Fields: title, category, isPublished, createdAt, updatedAt. */
+                    sort?: string;
                 };
                 header?: never;
                 path?: never;
@@ -838,6 +1229,51 @@ export interface paths {
                 400: components["responses"]["BadRequest"];
                 401: components["responses"]["Unauthorized"];
                 409: components["responses"]["Conflict"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/articles/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish, unpublish or delete several articles in one transaction
+         * @description Unknown ids are ignored. Only rows that actually change are audited (one activity entry per row); `affected` reports how many changed.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["BulkRequest"];
+                };
+            };
+            responses: {
+                /** @description Bulk result. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BulkResult"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
             };
         };
         delete?: never;
@@ -978,6 +1414,8 @@ export interface paths {
                     /** @description true = only published items, false = only drafts, omitted = all. */
                     published?: components["parameters"]["Published"];
                     type?: "policy" | "regulation" | "legal_guide";
+                    /** @description Sort as field:asc|desc. Fields: title, resourceType, isPublished, createdAt, updatedAt. */
+                    sort?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1022,6 +1460,51 @@ export interface paths {
                 400: components["responses"]["BadRequest"];
                 401: components["responses"]["Unauthorized"];
                 409: components["responses"]["Conflict"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/legal-resources/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish, unpublish or delete several legal resources in one transaction
+         * @description Unknown ids are ignored. Only rows that actually change are audited (one activity entry per row); `affected` reports how many changed.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["BulkRequest"];
+                };
+            };
+            responses: {
+                /** @description Bulk result. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BulkResult"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
             };
         };
         delete?: never;
@@ -1105,7 +1588,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List recent activity */
+        /**
+         * List recent activity
+         * @description Optional filters by action, entity type and an inclusive date range (`from`/`to`, YYYY-MM-DD in the Asia/Ho_Chi_Minh calendar).
+         */
         get: {
             parameters: {
                 query?: {
@@ -1113,6 +1599,10 @@ export interface paths {
                     limit?: number;
                     /** @description Case-insensitive substring; "%" and "_" are matched literally. */
                     q?: components["parameters"]["Search"];
+                    action?: components["schemas"]["ActivityAction"];
+                    entityType?: components["schemas"]["ActivityEntityType"];
+                    from?: string;
+                    to?: string;
                 };
                 header?: never;
                 path?: never;
@@ -1311,6 +1801,477 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/users/{id}/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        /** List active sessions (devices) of an account (role admin only) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Active sessions, most recently used first. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminSession"][];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{id}/sessions/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign an account out of every device (role admin only)
+         * @description When applied to yourself the current session is kept.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Number of revoked sessions. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            revoked: number;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+                403: components["responses"]["Forbidden"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the current admin's active sessions */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Active sessions; `current` marks this session. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminSession"][];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/account/sessions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Sign out one of your other devices */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Session revoked. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/stats/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All dashboard counters in one request */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Dashboard counters. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["StatsOverview"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/stats/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contact request trend for the last N days
+         * @description Days are counted in Asia/Ho_Chi_Minh. Includes archived daily counts so trends outlive the 90-day retention of individual requests.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Number of days including today. */
+                    days?: components["parameters"]["StatsDays"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Contact statistics. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContactStats"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/stats/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin activity for the last N days */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Number of days including today. */
+                    days?: components["parameters"]["StatsDays"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Activity statistics. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ActivityStats"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vehicle-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List vehicle categories in display order */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Categories. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            name: string;
+                            description: string;
+                        }[];
+                    };
+                };
+                503: components["responses"]["ServiceUnavailable"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/vehicle-categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List vehicle categories with usage counts */
+        get: {
+            parameters: {
+                query?: {
+                    page?: components["parameters"]["Page"];
+                    limit?: number;
+                    /** @description Case-insensitive substring; "%" and "_" are matched literally. */
+                    q?: components["parameters"]["Search"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of categories. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleCategoryPage"];
+                    };
+                };
+                401: components["responses"]["Unauthorized"];
+            };
+        };
+        put?: never;
+        /** Create a vehicle category */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["VehicleCategoryInput"];
+                };
+            };
+            responses: {
+                /** @description Created category. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleCategory"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                409: components["responses"]["Conflict"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/vehicle-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["Id"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an unused category (409 while vehicles still use it) */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthorized"];
+                404: components["responses"]["NotFound"];
+                409: components["responses"]["Conflict"];
+            };
+        };
+        options?: never;
+        head?: never;
+        /** Update a category; renaming also renames it on every vehicle */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["Id"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["VehicleCategoryPatch"];
+                };
+            };
+            responses: {
+                /** @description Updated category. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["VehicleCategory"];
+                    };
+                };
+                400: components["responses"]["BadRequest"];
+                401: components["responses"]["Unauthorized"];
+                404: components["responses"]["NotFound"];
+                409: components["responses"]["Conflict"];
+            };
+        };
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1326,7 +2287,29 @@ export interface components {
             username: string;
             displayName: string;
             role: components["schemas"]["AdminRole"];
+            twoFactorEnabled: boolean;
         };
+        LoginSession: {
+            /** @description Opaque random token; the server stores only its SHA-256 hash. */
+            accessToken: string;
+            /** @description Lifetime in seconds (28800). */
+            expiresIn: number;
+            /** @description True when the role requires 2FA and the account has not enrolled. The session is then restricted: other admin endpoints answer 403 with code TWO_FACTOR_SETUP_REQUIRED until enrollment is confirmed. */
+            twoFactorSetupRequired: boolean;
+            user: components["schemas"]["AdminIdentity"];
+        };
+        TwoFactorChallenge: {
+            /** @constant */
+            mfaRequired: true;
+            challengeToken: string;
+            /** @description Seconds (300). */
+            expiresIn: number;
+        };
+        TwoFactorCode: {
+            /** @description 6-digit TOTP code. */
+            code: string;
+        };
+        RecoveryCodes: string[];
         AdminUser: components["schemas"]["AdminIdentity"] & {
             isActive: boolean;
             /** Format: date-time */
@@ -1381,6 +2364,10 @@ export interface components {
         Vehicle: components["schemas"]["VehicleInput"] & {
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         VehicleFields: {
             slug?: string;
@@ -1408,6 +2395,10 @@ export interface components {
         Article: components["schemas"]["ArticleInput"] & {
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         ArticleFields: {
             slug?: string;
@@ -1456,6 +2447,8 @@ export interface components {
              * @enum {string}
              */
             status?: "new" | "in_progress" | "contacted" | "closed" | "spam";
+            /** @description Sort as field:asc|desc (default createdAt:desc). */
+            sort?: string;
         };
         ContactSubmissionInput: {
             name: string;
@@ -1484,6 +2477,11 @@ export interface components {
             consentText: string;
             /** Format: date-time */
             consentAt: string;
+            /**
+             * Format: date-time
+             * @description When the request first left the "new" status.
+             */
+            firstHandledAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1519,10 +2517,8 @@ export interface components {
                 actor: string;
                 /** Format: uuid */
                 actorId?: string | null;
-                /** @enum {string} */
-                action: "CREATE" | "UPDATE" | "DELETE" | "IMPORT" | "LOGIN" | "LOGOUT";
-                /** @enum {string} */
-                entityType: "vehicle" | "article" | "policy" | "regulation" | "legal_guide" | "contact_submission" | "admin_user" | "system";
+                action: components["schemas"]["ActivityAction"];
+                entityType: components["schemas"]["ActivityEntityType"];
                 /** Format: uuid */
                 entityId?: string | null;
                 entityLabel: string;
@@ -1535,6 +2531,163 @@ export interface components {
             statusCode?: number;
             message?: string | string[];
             error?: string;
+            /** @description Matches the X-Request-ID response header; quote it when reporting a problem. */
+            requestId?: string;
+        };
+        /** @enum {string} */
+        ActivityAction: "CREATE" | "UPDATE" | "DELETE" | "IMPORT" | "LOGIN" | "LOGOUT";
+        /** @enum {string} */
+        ActivityEntityType: "vehicle" | "vehicle_category" | "article" | "policy" | "regulation" | "legal_guide" | "contact_submission" | "admin_user" | "system";
+        ContactStatusCounts: {
+            new: number;
+            in_progress: number;
+            contacted: number;
+            closed: number;
+            spam: number;
+        };
+        ActionCounts: {
+            CREATE: number;
+            UPDATE: number;
+            DELETE: number;
+            IMPORT: number;
+            LOGIN: number;
+            LOGOUT: number;
+        };
+        PublishCount: {
+            total: number;
+            published: number;
+            draft: number;
+        };
+        StatsOverview: {
+            content: {
+                vehicles: components["schemas"]["PublishCount"];
+                articles: components["schemas"]["PublishCount"];
+                legal: {
+                    policy: components["schemas"]["PublishCount"];
+                    regulation: components["schemas"]["PublishCount"];
+                    legal_guide: components["schemas"]["PublishCount"];
+                };
+            };
+            contacts: {
+                total: number;
+                byStatus: components["schemas"]["ContactStatusCounts"];
+                /** @description New requests older than overdueHours. */
+                overdueNew: number;
+                overdueHours: number;
+                /** @description Last 30 days. */
+                avgResponseHours: number | null;
+                handledLast30Days: number;
+            };
+            users: {
+                activeUsers: number;
+                totalUsers: number;
+                activeSessions: number;
+            };
+            /** Format: date-time */
+            generatedAt: string;
+        };
+        ContactStats: {
+            days: number;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            total: number;
+            previousTotal: number;
+            /** @description null when the previous period is empty. */
+            changePercent: number | null;
+            byStatus: components["schemas"]["ContactStatusCounts"];
+            /** @description % of non-spam requests contacted or closed. */
+            handledRate: number | null;
+            avgResponseHours: number | null;
+            byCategory: {
+                category: string;
+                total: number;
+            }[];
+            topVehicles: {
+                slug: string;
+                name: string | null;
+                total: number;
+            }[];
+            detailRetentionDays: number;
+            series: {
+                /** Format: date */
+                day: string;
+                total: number;
+                byStatus: components["schemas"]["ContactStatusCounts"];
+            }[];
+        };
+        ActivityStats: {
+            days: number;
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            total: number;
+            byAction: components["schemas"]["ActionCounts"];
+            byEntity: {
+                entityType: components["schemas"]["ActivityEntityType"];
+                total: number;
+            }[];
+            topActors: {
+                actor: string;
+                total: number;
+            }[];
+            series: {
+                /** Format: date */
+                day: string;
+                total: number;
+                byAction: components["schemas"]["ActionCounts"];
+            }[];
+        };
+        BulkRequest: {
+            ids: string[];
+            /** @enum {string} */
+            action: "publish" | "unpublish" | "delete";
+        };
+        BulkResult: {
+            /** @enum {string} */
+            action: "publish" | "unpublish" | "delete";
+            requested: number;
+            affected: number;
+        };
+        AdminSession: {
+            /** Format: uuid */
+            id: string;
+            userAgent: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            current: boolean;
+        };
+        VehicleCategory: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string;
+            sortOrder: number;
+            vehicleCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        VehicleCategoryInput: {
+            name: string;
+            description?: string;
+            sortOrder?: number;
+        };
+        VehicleCategoryPatch: {
+            name?: string;
+            description?: string;
+            sortOrder?: number;
+        };
+        VehicleCategoryPage: {
+            items: components["schemas"]["VehicleCategory"][];
+            pagination: components["schemas"]["PageInfo"];
         };
     };
     responses: {
@@ -1620,6 +2773,8 @@ export interface components {
         PublicLimit: number;
         /** @description Case-insensitive substring; "%" and "_" are matched literally. */
         Search: string;
+        /** @description Number of days including today. */
+        StatsDays: number;
         /** @description true = only published items, false = only drafts, omitted = all. */
         Published: "true" | "false";
     };

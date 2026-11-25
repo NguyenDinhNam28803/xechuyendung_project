@@ -32,6 +32,7 @@ export const actionLabels: Record<ActivityEntry["action"], string> = {
 
 export const entityLabels: Record<ActivityEntry["entityType"], string> = {
   vehicle: "Xe",
+  vehicle_category: "Danh mục xe",
   article: "Bài viết",
   policy: "Chính sách",
   regulation: "Quy định",

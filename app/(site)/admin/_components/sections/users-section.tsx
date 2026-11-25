@@ -152,6 +152,28 @@ function UsersManager() {
     await update(target, { password }, `Đã đặt lại mật khẩu cho ${target.username}.`);
   }
 
+  /**
+   * Người dùng mất điện thoại và hết mã khôi phục: xóa 2FA của họ, thu hồi mọi
+   * phiên; lần đăng nhập sau họ phải đăng ký lại (bắt buộc với mọi vai trò).
+   */
+  async function resetTwoFactor(target: AdminUser) {
+    const accepted = await confirm({
+      title: `Đặt lại xác thực hai lớp của ${target.username}?`,
+      message:
+        "Chỉ làm khi đã xác minh đúng người (ví dụ gọi điện) và họ mất thiết bị. Mọi phiên của tài khoản bị đăng xuất; lần đăng nhập sau họ phải đăng ký 2FA lại.",
+      confirmLabel: "Đặt lại 2FA",
+      danger: true,
+    });
+    if (!accepted) return;
+    try {
+      await adminFetch(`/users/${target.id}/2fa/reset`, { method: "POST" });
+      await list.reload();
+      toast(`Đã đặt lại 2FA cho ${target.username}.`);
+    } catch (error) {
+      toast(errorMessage(error), "error");
+    }
+  }
+
   return (
     <>
       <Toolbar total={list.pageInfo.total} caption="Tài khoản quản trị">
@@ -188,6 +210,7 @@ function UsersManager() {
                 <th>Tài khoản</th>
                 <th>Vai trò</th>
                 <th>Trạng thái</th>
+                <th>2FA</th>
                 <th>Đăng nhập gần nhất</th>
                 <th>Hành động</th>
               </tr>
@@ -220,6 +243,11 @@ function UsersManager() {
                         {account.isActive ? "Đang hoạt động" : "Đã khóa"}
                       </span>
                     </td>
+                    <td>
+                      <span className={`admin-table-status ${account.twoFactorEnabled ? "is-published" : ""}`}>
+                        {account.twoFactorEnabled ? "Đã bật" : "Chưa bật"}
+                      </span>
+                    </td>
                     <td>{formatDate(account.lastLoginAt)}</td>
                     <td>
                       <div className="admin-table-actions">
@@ -230,6 +258,15 @@ function UsersManager() {
                         >
                           Đặt lại mật khẩu
                         </button>
+                        {!isSelf && account.twoFactorEnabled && (
+                          <button
+                            className="admin-table-button"
+                            onClick={() => void resetTwoFactor(account)}
+                            type="button"
+                          >
+                            Đặt lại 2FA
+                          </button>
+                        )}
                         {!isSelf && (
                           <button
                             className={`admin-table-button${account.isActive ? " admin-table-danger" : ""}`}
@@ -245,7 +282,7 @@ function UsersManager() {
                 );
               })}
               {!list.loading && list.items.length === 0 && (
-                <EmptyRow colSpan={5}>Không có tài khoản phù hợp.</EmptyRow>
+                <EmptyRow colSpan={6}>Không có tài khoản phù hợp.</EmptyRow>
               )}
             </tbody>
           </table>

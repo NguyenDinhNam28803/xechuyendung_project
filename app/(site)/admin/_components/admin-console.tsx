@@ -96,6 +96,13 @@ const navigation: { group: string; items: NavItem[] }[] = [
         icon: "⚿",
         description: "Đổi mật khẩu của bạn và đăng xuất khỏi các thiết bị khác.",
       },
+      {
+        href: "/admin/account/2fa",
+        label: "Xác thực hai lớp",
+        icon: "⛨",
+        description:
+          "Bật xác thực hai lớp, quản lý mã khôi phục của tài khoản của bạn.",
+      },
     ],
   },
 ];
@@ -143,7 +150,7 @@ function useNewContactCount() {
 
 function ConsoleLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { user, isAdmin, logout } = useAdminSession();
+  const { user, isAdmin, setupRequired, logout } = useAdminSession();
   const newContacts = useNewContactCount();
   const allItems = navigation.flatMap((group) => group.items);
   const current =
@@ -162,11 +169,17 @@ function ConsoleLayout({ children }: { children: ReactNode }) {
           </span>
         </Link>
         <nav className="admin-navigation" aria-label="Điều hướng quản trị">
-          {navigation.map(({ group, items }) => (
+          {navigation
+            .filter(({ items }) =>
+              !setupRequired || items.some((item) => item.href === "/admin/account/2fa"),
+            )
+            .map(({ group, items }) => (
             <div className="admin-navigation-group" key={group}>
               <span className="admin-navigation-label">{group}</span>
               {items
                 .filter((item) => !item.adminOnly || isAdmin)
+                // Phiên bị hạn chế (chưa đăng ký 2FA bắt buộc): chỉ mở trang 2FA.
+                .filter((item) => !setupRequired || item.href === "/admin/account/2fa")
                 .map((item) => {
                   const active = item.href === current.href;
                   return (

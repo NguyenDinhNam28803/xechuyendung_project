@@ -62,6 +62,10 @@ jobs:
       TRUST_PROXY: "0"
       ADMIN_USERNAME: e2e-admin
       ADMIN_PASSWORD: e2e-admin-password-123
+      # API (server main) bắt buộc 2FA mặc định. Client chưa có giao diện đăng
+      # ký 2FA nên tạm tắt bắt buộc; bỏ dòng này khi có giao diện 2FA và E2E
+      # cho luồng 2FA (xem PR server #3/#4).
+      TWO_FACTOR_REQUIRED_ROLES: none
       # Biến cho Next.js và Playwright.
       CONTENT_API_URL: http://127.0.0.1:4000/api/v1
       E2E_ADMIN_USERNAME: e2e-admin

@@ -7,6 +7,8 @@ export class AdminApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** Mã lỗi máy đọc được (ví dụ TWO_FACTOR_SETUP_REQUIRED), nếu server gửi. */
+    readonly code?: string,
   ) {
     super(message);
   }
@@ -14,6 +16,14 @@ export class AdminApiError extends Error {
 
 /** Phát khi phiên hết hạn/bị thu hồi để AdminSessionProvider chuyển về trang đăng nhập. */
 export const sessionExpiredEvent = "admin-session-expired";
+
+/**
+ * Phát khi server từ chối vì vai trò bắt buộc 2FA mà tài khoản chưa đăng ký
+ * (403 TWO_FACTOR_SETUP_REQUIRED), để chuyển người dùng tới trang thiết lập.
+ */
+export const twoFactorSetupRequiredEvent = "admin-2fa-setup-required";
+export const twoFactorSetupRequiredCode = "TWO_FACTOR_SETUP_REQUIRED";
+export const twoFactorSetupPath = "/admin/account/2fa";
 
 export async function adminFetch<T = void>(
   path: string,
@@ -33,11 +43,16 @@ export async function adminFetch<T = void>(
     if (response.status === 401 && !path.startsWith("/session/login")) {
       window.dispatchEvent(new Event(sessionExpiredEvent));
     }
+    const code =
+      isRecord(result) && typeof result.code === "string" ? result.code : undefined;
+    if (response.status === 403 && code === twoFactorSetupRequiredCode) {
+      window.dispatchEvent(new Event(twoFactorSetupRequiredEvent));
+    }
     const message =
       isRecord(result) && typeof result.message === "string"
         ? result.message
         : `Yêu cầu thất bại (${response.status}).`;
-    throw new AdminApiError(message, response.status);
+    throw new AdminApiError(message, response.status, code);
   }
   return result as T;
 }

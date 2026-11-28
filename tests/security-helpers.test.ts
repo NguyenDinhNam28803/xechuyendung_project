@@ -41,6 +41,12 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["contact-submissions", "search"],
       ["contact-submissions", id, "status"],
       ["import-defaults"],
+      ["account", "2fa"],
+      ["account", "2fa", "setup"],
+      ["account", "2fa", "confirm"],
+      ["account", "2fa", "disable"],
+      ["account", "2fa", "recovery-codes"],
+      ["users", id, "2fa", "reset"],
     ]) {
       assert.equal(isAllowedPath(path), true, path.join("/"));
     }
@@ -53,6 +59,11 @@ describe("isAllowedPath (whitelist proxy quản trị)", () => {
       ["auth", "login"],
       ["users", id, "sessions"],
       ["account", "delete"],
+      ["account", "2fa", "secret"],
+      ["account", "2fa", "setup", "x"],
+      ["users", "not-a-uuid", "2fa", "reset"],
+      ["users", id, "2fa", "disable"],
+      ["vehicles", id, "2fa", "reset"],
       [],
     ]) {
       assert.equal(isAllowedPath(path), false, path.join("/"));

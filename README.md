@@ -201,7 +201,8 @@ Bộ test trong `e2e/` tạo/sửa/xóa dữ liệu thật: **chỉ chạy với
 riêng cho kiểm thử, không bao giờ với production**.
 
 1. Chạy API với database kiểm thử đã migrate và tài khoản admin khởi tạo, ví
-   dụ `ADMIN_USERNAME=e2e-admin`, `ADMIN_PASSWORD=e2e-admin-password-123`.
+   dụ `ADMIN_USERNAME=e2e-admin`, `ADMIN_PASSWORD=e2e-admin-password-123`,
+   và một khóa mã hóa 2FA bất kỳ: `TOTP_ENCRYPTION_KEY=$(openssl rand -base64 32)`.
 2. Ở repo client:
 
    ```bash
@@ -213,9 +214,19 @@ riêng cho kiểm thử, không bao giờ với production**.
 
 Playwright tự chạy `next start` ở cổng 3100 (`E2E_PORT`). Đặt
 `E2E_BASE_URL` để dùng server có sẵn, hoặc `E2E_BROWSER_CHANNEL=msedge`/`chrome`
-để dùng trình duyệt đã cài thay cho Chromium tải về. Bộ test đăng nhập 2 lần
-mỗi lượt chạy; endpoint đăng nhập giới hạn 5 lần/IP/15 phút, nên chạy liên
-tiếp nhiều lượt có thể nhận lỗi "quá thường xuyên".
+để dùng trình duyệt đã cài thay cho Chromium tải về.
+
+Xác thực hai lớp (bắt buộc cho mọi vai trò):
+
+- Lần chạy đầu trên database mới, `e2e/auth.setup.ts` đăng ký 2FA cho admin qua
+  giao diện thật (đọc khóa ở mục "nhập khóa thủ công") và lưu khóa vào
+  `e2e/.auth/admin-2fa.json` (đã gitignore). Các lần sau dùng khóa đó để sinh
+  mã TOTP bằng `otplib`.
+- Xóa database kiểm thử thì xóa luôn `e2e/.auth/`. Nếu admin đã bật 2FA mà mất
+  file khóa, chạy `npm run admin:reset-2fa -- e2e-admin` ở repo server.
+- Server chỉ đếm lần đăng nhập **sai** (5 lần/IP + tài khoản/15 phút); bộ test
+  cố ý nhập sai mã trên tài khoản dùng một lần, không phải tài khoản admin, nên
+  chạy lại nhiều lượt không khóa admin.
 
 ## Cấu trúc chính
 

@@ -18,9 +18,34 @@ export function sessionCookieOptions(maxAge: number) {
   };
 }
 
+/**
+ * Mã thử thách của bước 2 đăng nhập (tài khoản đã bật 2FA). Giống token phiên,
+ * nó chỉ nằm trong cookie HttpOnly: JavaScript phía trình duyệt không đọc được,
+ * nên một lỗ XSS không lấy được mã để hoàn tất đăng nhập ở nơi khác. Cookie chỉ
+ * gửi kèm các route /api/admin/session/* và sống bằng thời hạn của thử thách
+ * (5 phút, do NestJS quyết định).
+ */
+export const challengeCookie = "xe_admin_challenge";
+
+export function challengeCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict" as const,
+    path: "/api/admin/session",
+    maxAge,
+  };
+}
+
 /** Đọc JSON từ response; trả null khi body không phải JSON (ví dụ trang lỗi 502 HTML). */
 export async function readJson(response: Response): Promise<unknown> {
   return response.json().catch(() => null);
+}
+
+/** Chuyển tiếp Retry-After (429) để giao diện báo đúng thời gian chờ. */
+export function retryAfter(response: Response): Record<string, string> {
+  const value = response.headers.get("retry-after");
+  return value && /^\d{1,6}$/.test(value) ? { "Retry-After": value } : {};
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {

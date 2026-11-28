@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { confirmDialog, drawer, login, runId, toast } from "./helpers";
+import { confirmDialog, drawer, enrollTwoFactor, runId, submitPassword, toast } from "./helpers";
 
 test("quản trị viên tạo biên tập viên; biên tập viên không vào được quản lý tài khoản", async ({
   page,
@@ -29,7 +29,10 @@ test("quản trị viên tạo biên tập viên; biên tập viên không vào 
   // Biên tập viên đăng nhập trong ngữ cảnh riêng.
   const editorContext = await browser.newContext({ storageState: { cookies: [], origins: [] } });
   const editorPage = await editorContext.newPage();
-  await login(editorPage, username, password);
+  // 2FA bắt buộc cho mọi vai trò: tài khoản mới đăng nhập phải đăng ký trước.
+  await submitPassword(editorPage, username, password);
+  await enrollTwoFactor(editorPage);
+  await expect(editorPage).toHaveURL(/\/admin$/);
   await expect(editorPage.getByRole("link", { name: "Tài khoản quản trị" })).toHaveCount(0);
   await editorPage.goto("/admin/users");
   await expect(editorPage.getByText("Chỉ quản trị viên mới có quyền quản lý tài khoản.")).toBeVisible();

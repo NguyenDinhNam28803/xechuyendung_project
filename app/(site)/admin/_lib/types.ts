@@ -3,7 +3,7 @@
  * server (app/lib/generated/api-schema.ts, sinh bằng `npm run gen:api`).
  * Server đổi schema → chạy lại gen:api → TypeScript báo ngay chỗ lệch.
  */
-import type { components } from "../../../lib/generated/api-schema";
+import type { components, paths } from "../../../lib/generated/api-schema";
 
 type Schemas = components["schemas"];
 
@@ -13,9 +13,19 @@ export type AdminLegalResource = Schemas["LegalResource"];
 export type ContactSubmission = Schemas["ContactSubmission"];
 export type ActivityEntry = Schemas["ActivityPage"]["items"][number];
 export type AdminUser = Schemas["AdminUser"];
-export type AdminIdentity = Schemas["AdminIdentity"];
+/** Người đang đăng nhập (GET /auth/me): danh tính + trạng thái bắt buộc 2FA. */
+export type AdminIdentity = Schemas["AdminIdentity"] & {
+  twoFactorSetupRequired: boolean;
+};
 export type AdminRole = Schemas["AdminRole"];
 export type PageInfo = Schemas["PageInfo"];
+export type RecoveryCodes = Schemas["RecoveryCodes"];
+
+type AccountPaths = paths["/api/v1/admin/account/2fa"];
+export type TwoFactorStatus =
+  AccountPaths["get"]["responses"][200]["content"]["application/json"];
+export type TwoFactorSetup =
+  paths["/api/v1/admin/account/2fa/setup"]["post"]["responses"][200]["content"]["application/json"];
 
 export type VehicleInput = Schemas["VehicleInput"];
 export type ArticleInput = Schemas["ArticleInput"];

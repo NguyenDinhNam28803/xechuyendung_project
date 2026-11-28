@@ -62,10 +62,9 @@ jobs:
       TRUST_PROXY: "0"
       ADMIN_USERNAME: e2e-admin
       ADMIN_PASSWORD: e2e-admin-password-123
-      # API (server main) bắt buộc 2FA mặc định. Client chưa có giao diện đăng
-      # ký 2FA nên tạm tắt bắt buộc; bỏ dòng này khi có giao diện 2FA và E2E
-      # cho luồng 2FA (xem PR server #3/#4).
-      TWO_FACTOR_REQUIRED_ROLES: none
+      # API bắt buộc 2FA cho mọi vai trò (mặc định của server). E2E đăng ký 2FA
+      # cho admin qua giao diện ở auth.setup.ts; khóa mã hóa TOTP sinh ngẫu
+      # nhiên mỗi lần chạy ở bước khởi động API bên dưới.
       # Biến cho Next.js và Playwright.
       CONTENT_API_URL: http://127.0.0.1:4000/api/v1
       E2E_ADMIN_USERNAME: e2e-admin
@@ -92,7 +91,8 @@ jobs:
           npm ci
           npm run db:migrate
           npm run build
-          nohup node dist/main > ../api.log 2>&1 &
+          # Khóa chỉ dùng cho database E2E tạm thời của lần chạy này.
+          TOTP_ENCRYPTION_KEY="$(openssl rand -base64 32)" nohup node dist/main > ../api.log 2>&1 &
           for i in $(seq 1 30); do
             curl -sf http://127.0.0.1:4000/health/ready && exit 0
             sleep 2

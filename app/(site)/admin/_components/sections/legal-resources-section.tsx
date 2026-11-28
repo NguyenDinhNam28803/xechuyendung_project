@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { adminFetch } from "../../_lib/admin-api";
-import { resourceTypeLabels } from "../../_lib/format";
+import { formatDate, resourceTypeLabels } from "../../_lib/format";
 import { autoSlug } from "../../_lib/slug";
 import type {
   AdminLegalResource,
@@ -10,13 +10,20 @@ import type {
   LegalResourceType,
   PageResponse,
 } from "../../_lib/types";
+import { useContentActions } from "../../_lib/use-content-actions";
 import { useEntityEditor } from "../../_lib/use-entity-editor";
+import { useSelection } from "../../_lib/use-selection";
 import { apiQuery, usePagedList } from "../../_lib/use-paged-list";
 import { DetailDialog, DetailItem, SourceLink } from "../detail-dialog";
 import { Drawer } from "../drawer";
 import { SlugField } from "../form-editors";
 import {
-  EmptyRow,
+  ContentBulkButtons,
+  DataTable,
+  PublishSwitch,
+  type Column,
+} from "../data-table";
+import {
   Feedback,
   Field,
   FilterTabs,
@@ -24,7 +31,6 @@ import {
   FormError,
   ListControls,
   Pagination,
-  PublishStatus,
   PublishToggle,
   publishFilterOptions,
   RowActions,
@@ -50,7 +56,7 @@ const emptyForm = (): ResourceForm => ({
   isPublished: false,
 });
 
-const filterKeys = ["published"] as const;
+const filterKeys = ["published", "sort", "limit"] as const;
 
 function toForm(resource: AdminLegalResource): ResourceForm {
   return {
@@ -72,10 +78,11 @@ export function LegalResourcesSection({ resourceType }: { resourceType: LegalRes
       adminFetch<PageResponse<AdminLegalResource>>(
         `/legal-resources?${apiQuery({
           page,
-          limit: 25,
+          limit: Number(filters.limit) || 25,
           q: search,
           type: resourceType,
           published: filters.published,
+          sort: filters.sort,
         })}`,
       ),
     [resourceType],
@@ -99,8 +106,67 @@ export function LegalResourcesSection({ resourceType }: { resourceType: LegalRes
     savedMessage: "Đã lưu tài liệu.",
     deletedMessage: "Đã xóa tài liệu.",
   });
+  const selection = useSelection(list.items.map((item) => item.id));
+  const actions = useContentActions<AdminLegalResource>({
+    basePath: "/legal-resources",
+    noun: "tài liệu",
+    updateItem: list.updateItem,
+    reload: list.reload,
+    onBulkDone: selection.clear,
+  });
+  const pageSize = Number(list.filters.limit) || 25;
   const [detail, setDetail] = useState<AdminLegalResource | null>(null);
   const form = editor.form;
+  const columns: Column<AdminLegalResource>[] = [
+    {
+      key: "title",
+      header: "Tên tài liệu",
+      sortKey: "title",
+      cell: (resource) => (
+        <>
+          <strong>{resource.title}</strong>
+          <small>{resource.slug}</small>
+        </>
+      ),
+    },
+    {
+      key: "summary",
+      header: "Tóm tắt",
+      className: "admin-table-summary",
+      cell: (resource) => resource.summary || "—",
+    },
+    {
+      key: "status",
+      header: "Trạng thái",
+      sortKey: "isPublished",
+      cell: (resource) => (
+        <PublishSwitch
+          isPublished={resource.isPublished}
+          label={resource.title}
+          onToggle={() => void actions.togglePublished(resource)}
+          pending={actions.isPending(resource.id)}
+        />
+      ),
+    },
+    {
+      key: "updatedAt",
+      header: "Cập nhật",
+      sortKey: "updatedAt",
+      className: "admin-nowrap",
+      cell: (resource) => formatDate(resource.updatedAt),
+    },
+    {
+      key: "actions",
+      header: "Hành động",
+      cell: (resource) => (
+        <RowActions
+          onDetail={() => setDetail(resource)}
+          onEdit={() => editor.openEdit(resource)}
+          onDelete={() => void editor.remove(resource, resource.title)}
+        />
+      ),
+    },
+  ];
 
   return (
     <>
@@ -123,54 +189,26 @@ export function LegalResourcesSection({ resourceType }: { resourceType: LegalRes
           value={list.filters.published ?? ""}
         />
       </ListControls>
-      <section className="admin-card admin-list">
-        <div className="admin-list-heading">
-          <h2>{typeLabel}</h2>
-          <span>{list.loading ? "Đang tải..." : `${list.pageInfo.total} mục`}</span>
-        </div>
-        <div className="admin-data-table-wrap">
-          <table className="admin-data-table">
-            <thead>
-              <tr>
-                <th>Tên tài liệu</th>
-                <th>Slug</th>
-                <th>Tóm tắt</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.items.map((resource) => (
-                <tr key={resource.id}>
-                  <td>
-                    <strong>{resource.title}</strong>
-                    <small>{typeLabel}</small>
-                  </td>
-                  <td>
-                    <code>{resource.slug}</code>
-                  </td>
-                  <td className="admin-table-summary">{resource.summary || "—"}</td>
-                  <td>
-                    <PublishStatus isPublished={resource.isPublished} />
-                  </td>
-                  <td>
-                    <RowActions
-                      onDetail={() => setDetail(resource)}
-                      onEdit={() => editor.openEdit(resource)}
-                      onDelete={() => void editor.remove(resource, resource.title)}
-                    />
-                  </td>
-                </tr>
-              ))}
-              {!list.loading && list.items.length === 0 && (
-                <EmptyRow colSpan={5}>
-                  Không có mục phù hợp. Hãy tạo nội dung mới hoặc điều chỉnh từ khóa/bộ lọc.
-                </EmptyRow>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataTable
+        bulkActions={
+          <ContentBulkButtons
+            disabled={actions.bulkRunning}
+            onAction={(action) => void actions.runBulk(action, selection.ids)}
+          />
+        }
+        columns={columns}
+        loading={list.loading}
+        minWidth={980}
+        onPageSizeChange={(size) => list.setFilter("limit", size === 25 ? "" : String(size))}
+        onSortChange={(sort) => list.setFilter("sort", sort)}
+        pageSize={pageSize}
+        rowLabel={(row) => row.title}
+        rows={list.items}
+        selection={selection}
+        sort={list.filters.sort}
+        title={typeLabel}
+        total={list.pageInfo.total}
+      />
       <Pagination pageInfo={list.pageInfo} onPageChange={(page) => void list.goToPage(page)} />
 
       {form && (
